@@ -83,14 +83,6 @@ roleRef:
   kind: Role
   name: operator
   apiGroup: rbac.authorization.k8s.io
-#---
-#apiVersion: v1
-#kind: Secret
-#metadata:
-#  name: operator-oauth
-#stringData:
-#  client_id: {{ .client_id }} 
-#  client_secret: {{ .client_secret }}
 ---
 apiVersion: apps/v1
 kind: Deployment
