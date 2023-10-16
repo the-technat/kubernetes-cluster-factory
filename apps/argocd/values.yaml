@@ -17,8 +17,8 @@ argo-cd:
             id: github
             name: GitHub
             config:
-              clientID: $github-oidc:clientID
-              clientSecret: $github-oidc:clientSecret 
+              clientID: $github-oidc:client_id
+              clientSecret: $github-oidc:client_secret 
               orgs:
               - name: alleaffengaffen
     rbac:
