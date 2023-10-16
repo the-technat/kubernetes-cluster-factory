@@ -6,12 +6,12 @@ argo-cd:
   configs:
     params:
       server.insecure: true
-      timeout.reconciliation: 20
     cm:
       url: "https://cd.technat.dev"
       server.rbac.log.enforce.enable: "true"
       exec.enabled: "true"
       admin.enabled: "true"
+      timeout.reconciliation: 20
       dex.config: |
         connectors:
           - type: github
