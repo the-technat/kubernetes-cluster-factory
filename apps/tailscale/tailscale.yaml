@@ -105,6 +105,7 @@ spec:
         - name: oauth
           secret:
             secretName: operator-oauth
+      priorityClassName: infra
       containers:
         - name: operator
           image: tailscale/k8s-operator:unstable
