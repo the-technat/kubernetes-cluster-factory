@@ -10,7 +10,6 @@ metadata:
   name: traefik-funnel
   namespace: kube-system
 spec:
-  loadBalancerClass: tailscale
   externalTrafficPolicy: Cluster
   internalTrafficPolicy: Cluster
   ports:
