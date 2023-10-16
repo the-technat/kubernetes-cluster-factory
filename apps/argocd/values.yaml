@@ -17,7 +17,7 @@ argo-cd:
             id: github
             name: GitHub
             config:
-              clientID: 26be52c1bdb04a4d6e1f
+              clientID: $github-oidc:clientID
               clientSecret: $github-oidc:clientSecret 
               orgs:
               - name: alleaffengaffen
@@ -32,16 +32,14 @@ argo-cd:
       enabled: true
       annotations:
         ingress.kubernetes.io/force-ssl-redirect: "true"
-				tailscale.com/expose: "true"
-				tailscale.com/funnel: "true"
-				tailscale.com/host: "argo"
-      ingressClassName: "tailscale"
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+      ingressClassName: "traefik"
       hosts:
         - cd.technat.dev
       tls:
         - secretName: argocd-secret
           hosts:
-            - argo
+            - cd.technat.dev
     priorityClassName: "system-cluster-critical"
     containerSecurityContext:
       allowPrivilegeEscalation: false
@@ -162,4 +160,3 @@ argo-cd:
       requests:
         cpu: 50m
         memory: 64Mi
-
