@@ -1,17 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: argocd
+  name: cert-manager
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-3"
+    argocd.argoproj.io/sync-wave: "-4"
 spec:
   destination:
-    namespace: argocd
+    namespace: cert-manager
     server: https://kubernetes.default.svc
   project: default
   source:
-    path: apps/argocd
+    path: apps/cert-manager
     repoURL: https://github.com/alleaffengaffen/l-t
     targetRevision: HEAD
   syncPolicy:
@@ -21,3 +21,4 @@ spec:
       allowEmpty: false
     syncOptions:
       - ServerSideApply=true
+      - CreateNamespace=true
