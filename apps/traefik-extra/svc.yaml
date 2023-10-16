@@ -7,9 +7,11 @@ metadata:
   annotations:
     tailscale.com/expose: "true"
     tailscale.com/funnel: "true"
+    tailscale.com/tags: "tag:funnel,tag:k8s"
   name: traefik-funnel
   namespace: kube-system
 spec:
+  loadBalancerClass: tailscale
   externalTrafficPolicy: Cluster
   internalTrafficPolicy: Cluster
   ports:

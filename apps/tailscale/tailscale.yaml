@@ -117,8 +117,8 @@ spec:
               cpu: 1
               memory: 500Mi
           env:
-            # - name: OPERATOR_HOSTNAME
-            # value: tailscale-operator
+            - name: OPERATOR_HOSTNAME
+              value: tailscale-operator-l-t
             - name: OPERATOR_SECRET
               value: operator
             - name: OPERATOR_LOGGING
