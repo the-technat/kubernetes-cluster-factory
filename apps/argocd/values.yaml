@@ -33,7 +33,7 @@ argo-cd:
       enabled: true
       annotations:
         ingress.kubernetes.io/force-ssl-redirect: "true"
-        cert-manager.io/cluster-issuer: letsencrypt-prod
+        cert-manager.io/cluster-issuer: letsencrypt-production
       ingressClassName: "traefik"
       hosts:
         - cd.technat.dev
