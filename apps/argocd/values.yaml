@@ -38,7 +38,7 @@ argo-cd:
       hosts:
         - cd.technat.dev
       tls:
-        - secretName: argocd-secret
+        - secretName: argocd-tls
           hosts:
             - cd.technat.dev
     priorityClassName: "system-cluster-critical"
