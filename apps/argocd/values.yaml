@@ -31,14 +31,17 @@ argo-cd:
   server:
     ingress:
       enabled: true
+      # https: true
       annotations:
-        ingress.kubernetes.io/force-ssl-redirect: "true"
-        cert-manager.io/cluster-issuer: letsencrypt-staging
-      ingressClassName: "traefik"
+        cert-manager.io/cluster-issuer: letsencrypt-production
+        # nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+        # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+      ingressClassName: "nginx"
       hosts:
         - cd.technat.dev
       tls:
-        - secretName: argocd-tls
+        # - secretName: argocd-server-tls
+        - secretName: argocd-http-tls
           hosts:
             - cd.technat.dev
     priorityClassName: "system-cluster-critical"

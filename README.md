@@ -23,7 +23,7 @@ sudo apt install linux-modules-extra-raspi
 K3s is so easy to install, just simply run:
 
 ```bash
-k3sup install --cluster --local
+k3sup install --cluster --local --k3s-extra-args '--disable=traefik --disable=servicelb'
 ```
 
 ## External-secrets

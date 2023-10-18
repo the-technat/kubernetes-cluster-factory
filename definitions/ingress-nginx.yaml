@@ -1,17 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: traefik-extra
+  name: ingress-nginx
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "-4"
 spec:
   destination:
-    namespace: kube-system
+    namespace: ingress-nginx
     server: https://kubernetes.default.svc
   project: default
   source:
-    path: apps/traefik-extra
+    path: apps/ingress-nginx
     repoURL: https://github.com/alleaffengaffen/l-t
     targetRevision: HEAD
   syncPolicy:
@@ -21,3 +21,4 @@ spec:
       allowEmpty: false
     syncOptions:
       - ServerSideApply=true
+      - CreateNamespace=true

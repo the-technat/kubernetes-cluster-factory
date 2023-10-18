@@ -1,11 +1,11 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: traefik-funnel
+  name: ingress-nginx-funnel
   annotations:
     tailscale.com/expose: "true"
     tailscale.com/funnel: "true"
-    tailscale.com/host: "traefik-l-t"
+    tailscale.com/host: "ingress-nginx-l-t"
     tailscale.com/tags: "tag:funnel,tag:k8s"
 spec:
   ingressClassName: tailscale
@@ -16,9 +16,9 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: traefik
+                name: ingress-nginx-controller
                 port:
-                  number: 80
+                  number: 443
   tls:
     - hosts:
-        - traefik-l-t
+        - ingress-nginx-l-t
