@@ -5,3 +5,6 @@ dependencies:
   - name: cert-manager
     version: 1.x.x
     repository: https://charts.jetstack.io
+  - name: cert-manager-webhook-hetzner
+    version: 0.x.x
+    repository: https://mecodia.github.io/cert-manager-webhook-hetzner
