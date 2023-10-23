@@ -1,0 +1,116 @@
+name: Create hetzner-k3s cluster
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        type: string
+        default: ""
+        description: Name of the cluster
+      master_count:
+        type: choice
+        default: "1"
+        options:
+        - "1"
+        - "3"
+        description: Number of control-plane instances to deploy
+      worker_count:
+        type: string
+        default: "1"
+        description: Number of worker nodes to deploy
+      worker_type:
+        type: choice
+        default: cax11
+        options:
+          - cx11
+          - cpx11
+          - cx21
+          - cpx21
+          - cx31
+          - cpx31
+          - cax11
+          - cax21
+          - cax31
+        description: Size of the worker instances to create (cax=arm64)
+      location:
+        type: choice
+        default: hel1
+        options:
+          - hel1
+          - fsn1
+          - nbg1
+          - ash
+          - hil
+        description: Location to deploy the cluster
+      k3s_version:
+        type: choice
+        default: "1.28"
+        options:
+        - "1.24"
+        - "1.25"
+        - "1.25"
+        - "1.26"
+        - "1.27"
+        - "1.28"
+        description: Version of k3s to deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write
+      contents: read
+    steps:
+    - uses: actions/checkout@v3
+    - name: Fetch secrets from AKeyless
+      id: fetch-secrets
+      uses: LanceMcCarthy/akeyless-action@v3
+      with:
+        access-id: ${{ secrets.AKEYLESS_ACCESS_ID}}
+        static-secrets: '{"/alleaffengaffen/actions/grapes/hcloud_token":"HCLOUD_TOKEN"}'
+    - name: Create output directory
+      run: mkdir output
+    - name: Setup hetzner-k3s cli
+      run: |
+        curl -fsSL -o /tmp/hetzner-k3s-linux-amd64 https://github.com/vitobotta/hetzner-k3s/releases/latest/download/hetzner-k3s-linux-amd64
+        sudo install -m 555 /tmp/hetzner-k3s-linux-amd64 /usr/local/bin/hetzner-k3s
+        hetzner-k3s --version
+    - name: Setup go-template-cli
+      run: |
+        curl -fsSL -o /tmp/tpl https://github.com/bluebrown/go-template-cli/releases/latest/download/tpl-linux-amd64
+        sudo install -m 555 /tmp/tpl /usr/local/bin/tpl
+        tpl --version
+    - name: Setup cilium-cli
+      run: |
+        curl -sL --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz -o /tmp/cilium.tar.gz
+        sudo tar -C /usr/local/bin -xzf /tmp/cilium.tar.gz
+        rm /tmp/cilium.tar.gz
+        cilium --version
+    - name: Generate SSH key
+      run: |
+        ssh-keygen -q -t ed25519 -C "${{ github.event.inputs.name }} hetzner-k3s" -f "output/id_ed25519" -N ""
+    - name: Calculate k3s Version
+      run:  echo "K3S_RELEASE=$(hetzner-k3s releases | grep -v "rc" | grep ${{ github.event.inputs.k3s_version }} | tail -n 1)" >> $GITHUB_ENV
+    - name: Template config
+      run: |
+        cat <<EOF | tpl -f hetzner-k3s/hetzner-k3s.yaml > output/cluster-config.yaml
+        {
+          "name": "${{ github.event.inputs.name }}",
+          "k3s_version": "${{ env.K3S_RELEASE }}",
+          "location": "${{ github.event.inputs.location }}",
+          "worker_type": "${{ github.event.inputs.worker_type }}",
+          "worker_count": "${{ github.event.inputs.worker_count }}",
+          "master_count": "${{ github.event.inputs.master_count }}"
+        }
+        EOF
+    - name: Create cluster
+      run: hetzner-k3s create --config output/cluster-config.yaml
+    - name: Install cilium
+      env:
+        KUBECONFIG: output/kubeconfig
+      run: cilium install --set "kubeProxyReplacement=false"
+    - name: Upload outputs
+      uses: actions/upload-artifact@v3
+      with:
+        name: outputs-${{ github.event.inputs.name }}
+        path: output/

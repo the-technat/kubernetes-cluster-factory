@@ -1,0 +1,42 @@
+---
+cluster_name: {{ .name }}
+kubeconfig_path: "./output/kubeconfig"
+k3s_version: {{ .k3s_version }}
+public_ssh_key_path: "./output/id_ed25519.pub"
+private_ssh_key_path: "./output/id_ed25519"
+private_network_subnet: 10.0.0.0/16 # ensure this doesn't overlap with other networks in the same project
+ssh_allowed_networks:
+  - 0.0.0.0/0 # ensure your current IP is included in the range
+api_allowed_networks:
+  - 0.0.0.0/0 # ensure your current IP is included in the range
+disable_flannel: true
+schedule_workloads_on_masters: false
+# cluster_cidr: 10.244.0.0/16 # optional: a custom IPv4/IPv6 network CIDR to use for pod IPs
+# service_cidr: 10.43.0.0/16 # optional: a custom IPv4/IPv6 network CIDR to use for service IPs
+# cluster_dns: 10.43.0.10 # optional: IPv4 Cluster IP for coredns service. Needs to be an address from the service_cidr range
+cloud_controller_manager_manifest_url: "https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/download/v1.18.0/ccm-networks.yaml"
+csi_driver_manifest_url: "https://raw.githubusercontent.com/hetznercloud/csi-driver/v2.5.1/deploy/kubernetes/hcloud-csi.yml"
+system_upgrade_controller_manifest_url: "https://raw.githubusercontent.com/rancher/system-upgrade-controller/master/manifests/system-upgrade-controller.yaml"
+masters_pool:
+  instance_type: cpx21
+  instance_count: {{ .master_count }}
+  location: {{ .location }}
+worker_node_pools:
+- name: default
+  instance_type: {{ .worker_type }}
+  instance_count: {{ .worker_count }}
+  location: {{ .location }}
+  # labels:
+  #   - key: purpose
+  #     value: blah
+  # taints:
+  #   - key: something
+  #     value: value1:NoSchedule
+additional_packages:
+- vim
+- unattended-upgrades
+- update-notifier-common
+post_create_commands:
+- sudo systemctl enable unattended-upgrades
+- sudo systemctl start unattended-upgrades
+enable_encryption: true
