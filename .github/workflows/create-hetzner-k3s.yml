@@ -89,6 +89,7 @@ jobs:
     - name: Generate SSH key
       run: |
         ssh-keygen -q -t ed25519 -C "${{ github.event.inputs.name }} hetzner-k3s" -f "output/id_ed25519" -N ""
+        curl -fsSL https://github.com/$GITHUB_ACTOR.keys | tee -a "output/id_ed25519.pub"
     - name: Calculate k3s Version
       run:  echo "K3S_RELEASE=$(hetzner-k3s releases | grep -v "rc" | grep ${{ github.event.inputs.k3s_version }} | tail -n 1)" >> $GITHUB_ENV
     - name: Template config
@@ -108,7 +109,7 @@ jobs:
     - name: Install cilium
       env:
         KUBECONFIG: output/kubeconfig
-      run: cilium install --set "kubeProxyReplacement=false"
+      run: cilium install --set "kubeProxyReplacement=disabled"
     - name: Upload outputs
       uses: actions/upload-artifact@v3
       with:
