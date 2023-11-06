@@ -28,9 +28,7 @@ This method installs k3s on Hcloud using a cool shell script, which you can find
 
 ### To Do
 
-- the destroy workflow is not yet finished
 - cilium installation doesn't quite work as expected
-- do a test run with all possible options
 
 ## Ideas
 
