@@ -80,19 +80,21 @@ jobs:
         curl -fsSL -o /tmp/tpl https://github.com/bluebrown/go-template-cli/releases/latest/download/tpl-linux-amd64
         sudo install -m 555 /tmp/tpl /usr/local/bin/tpl
         tpl --version
-    - name: Setup cilium-cli
+    - name: Setup helm
       run: |
-        curl -sL --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz -o /tmp/cilium.tar.gz
-        sudo tar -C /usr/local/bin -xzf /tmp/cilium.tar.gz
-        rm /tmp/cilium.tar.gz
-        cilium version
+        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        chmod 700 get_helm.sh
+        ./get_helm.sh
+        rm get_helm.sh
+        helm version
+        helm repo add cilium https://helm.cilium.io
     - name: Generate SSH key
       run: |
         ssh-keygen -q -t ed25519 -C "${{ github.event.inputs.name }} hetzner-k3s" -f "output/id_ed25519" -N ""
         curl -fsSL https://github.com/$GITHUB_ACTOR.keys | tee -a "output/id_ed25519.pub"
     - name: Calculate k3s Version
       run:  echo "K3S_RELEASE=$(hetzner-k3s releases | grep -v "rc" | grep ${{ github.event.inputs.k3s_version }} | tail -n 1)" >> $GITHUB_ENV
-    - name: Template config
+    - name: Template configs
       run: |
         cat <<EOF | tpl -f hetzner-k3s/hetzner-k3s.yaml > output/cluster-config.yaml
         {
@@ -104,12 +106,17 @@ jobs:
           "master_count": "${{ github.event.inputs.master_count }}"
         }
         EOF
+        cat <<EOF | tpl -f hetzner-k3s/cilium-values.yaml > output/cilium-values.yaml
+        {
+          "master_count": "${{ github.event.inputs.master_count }}"
+        }
+        EOF
     - name: Create cluster
       run: hetzner-k3s create --config output/cluster-config.yaml
     - name: Install cilium
       env:
         KUBECONFIG: output/kubeconfig
-      run: cilium install --set "kubeProxyReplacement=disabled"
+      run: helm upgrade -i cilium -n kube-system cilium/cilium -f output/cilium-values.yaml
     - name: Upload outputs
       uses: actions/upload-artifact@v3
       with:

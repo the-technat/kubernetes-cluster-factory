@@ -1,0 +1,8 @@
+kubeProxyReplacement: "disabled"
+
+operator:
+  replicas: {{.master_count}}
+  priorityClassName: "system-cluster-critical"
+
+policyEnforcementMode: always
+policyAuditMode: true
