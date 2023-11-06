@@ -85,7 +85,7 @@ jobs:
         curl -sL --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz -o /tmp/cilium.tar.gz
         sudo tar -C /usr/local/bin -xzf /tmp/cilium.tar.gz
         rm /tmp/cilium.tar.gz
-        cilium --version
+        cilium version
     - name: Generate SSH key
       run: |
         ssh-keygen -q -t ed25519 -C "${{ github.event.inputs.name }} hetzner-k3s" -f "output/id_ed25519" -N ""
