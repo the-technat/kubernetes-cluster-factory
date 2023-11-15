@@ -1,0 +1,103 @@
+global:
+  priorityClassName: "infra"
+
+podDnsPolicy: "ClusterFirstWithHostNet"
+
+installCRDs: true
+
+# we support ARM!
+tolerations:
+  - operator: Equal
+    key: "beta.kubernetes.io/arch"
+    value: "arm64"
+    effect: "NoExecute"
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    cpu: 1
+    memory: 1Gi
+
+securityContext:
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+
+webhook:
+  hostNetwork: true
+  config:
+    apiVersion: webhook.config.cert-manager.io/v1alpha1
+    kind: WebhookConfiguration
+    securePort: 10260
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
+  tolerations:
+    - operator: Equal
+      key: "beta.kubernetes.io/arch"
+      value: "arm64"
+      effect: "NoExecute"
+
+cainjector:
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
+  tolerations:
+    - operator: Equal
+      key: "beta.kubernetes.io/arch"
+      value: "arm64"
+      effect: "NoExecute"
+
+startupapicheck:
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+  tolerations:
+    - operator: Equal
+      key: "beta.kubernetes.io/arch"
+      value: "arm64"
+      effect: "NoExecute"

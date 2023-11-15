@@ -1,0 +1,31 @@
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: ${role_arn}
+priorityClassName: "infra"
+env:
+  - name: AWS_DEFAULT_REGION
+    value: ${region}
+triggerLoopOnEvent: true
+policy: sync
+txtOwnerId: ${cluster_name}
+provider: aws
+# we support ARM!
+tolerations:
+  - operator: Equal
+    key: "beta.kubernetes.io/arch"
+    value: "arm64"
+    effect: "NoExecute"
+securityContext:
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+resources:
+  limits:
+    cpu: 1
+    memory: 1Gi
+  requests:
+    cpu: 10m
+    memory: 50Mi

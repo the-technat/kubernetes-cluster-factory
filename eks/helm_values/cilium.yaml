@@ -1,0 +1,127 @@
+## cni-chaining values
+# https://docs.cilium.io/en/stable/installation/cni-chaining-aws-cni/
+# cni:
+#   chainingMode: aws-cni
+#   exclusive: false
+# enableIPv4Masquerade: false
+# tunnel: disabled
+# endpointRoutes:
+#   enabled: true
+# remoteNodeIdentity: false
+# bpf:
+#   # explicitly set hostLegacy routing, required since EKS 1.24
+#   # somewhat related https://github.com/cilium/cilium/issues/20677
+#   hostLegacyRouting: true
+
+## ENI Integration values
+# https://docs.cilium.io/en/v1.13/installation/k8s-install-helm/#install-cilium -> eks
+eni:
+  enabled: true
+ipam:
+  mode: eni
+egressMasqueradeInterfaces: eth0
+tunnel: disabled
+bpf:
+  hostLegacyRouting: true
+
+# kube-proxy replacement
+# also requires ./kubectl -n kube-system delete daemonset kube-proxy --ignore-not-found in purge_aws_networking
+# cilium ingress gateway requires either partial or strict for the replacement
+kubeProxyReplacement: strict
+k8sServiceHost: ${cluster_endpoint}
+k8sServicePort: "443"
+
+## General values
+cluster:
+  name: banana-bread
+rollOutCiliumPods: true
+priorityClassName: "system-node-critical"
+annotateK8sNode: true
+policyEnforcementMode: "default"
+containerRuntime:
+  integration: containerd
+  socketPath: /var/run/containerd/containerd.sock
+
+# we are affected by https://github.com/cilium/cilium/issues/22340
+ingressController:
+  enabled: false
+  loadBalancerMode: shared
+  service:
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+      service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+
+## Resources and security-contexts + hubble ui configs
+operator:
+  replicas: 1
+  rollOutPods: true
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: false
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+hubble:
+  enabled: true
+  rollOutPods: true
+  relay:
+    enabled: true
+    rollOutPods: true
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1024M
+      requests:
+        cpu: 100m
+        memory: 64Mi
+    tolerations:
+      - operator: Equal
+        key: "beta.kubernetes.io/arch"
+        value: "arm64"
+        effect: "NoExecute"
+  ui:
+    enabled: true
+    rollOutPods: true
+    securityContext:
+      enabled: true
+      runAsUser: 10001
+      runAsGroup: 10001
+      fsGroup: 10001
+    backend:
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1024M
+        requests:
+          cpu: 100m
+          memory: 64Mi
+    frontend:
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1024M
+        requests:
+          cpu: 100m
+          memory: 64Mi
+    proxy:
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256M
+        requests:
+          cpu: 100m
+          memory: 24Mi
+    tolerations:
+      - operator: Equal
+        key: "beta.kubernetes.io/arch"
+        value: "arm64"
+        effect: "NoExecute"
+resources:
+  requests:
+    cpu: 300m
+    memory: 300Mi

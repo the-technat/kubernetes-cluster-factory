@@ -1,0 +1,35 @@
+replicaCount: 1
+clusterName: ${cluster_name}
+ingressClass: alb
+region: ${region}
+vpcId: ${vpcID}
+priorityClassName: infra
+defaultSSLPolicy: "ELBSecurityPolicy-FS-1-2-Res-2020-10"
+tolerations:
+  - operator: Equal
+    key: "beta.kubernetes.io/arch"
+    value: "arm64"
+    effect: "NoExecute"
+
+hostNetwork: true # required due to cilium overlay
+dnsPolicy: "ClusterFirstWithHostNet"
+
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: ${role_arn}
+
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

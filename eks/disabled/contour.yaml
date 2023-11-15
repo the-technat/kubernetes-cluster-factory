@@ -1,0 +1,54 @@
+contour:
+  priorityClassName: "infra"
+  resources:
+    limits:
+      cpu: 750m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 128Mi
+  manageCRDs: true
+  ingressClass:
+    name: ${className}
+    create: true
+    default: true
+
+envoy:
+  service:
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+      service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+  kind: deployment
+  priorityClassName: "infra"
+  resources:
+    limits:
+      cpu: 750m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 128Mi
+  shutdownManager:
+    enabled: true
+    resources:
+      limits:
+        cpu: 100m
+        memory: 100Mi
+      requests:
+        cpu: 25m
+        memory: 50Mi
+
+defaultBackend:
+  enabled: true
+  image:
+    registry: ghcr.io
+    repository: alleaffengaffen/alleaffengaffen
+    tag: main
+  containerPorts:
+    http: 8080
+  resources:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 10m
+      memory: 10Mi
