@@ -21,7 +21,7 @@ jobs:
       uses: LanceMcCarthy/akeyless-action@v3
       with:
         access-id: ${{ secrets.AKEYLESS_ACCESS_ID}}
-        static-secrets: '{"/alleaffengaffen/actions/grapes/hcloud_token":"HCLOUD_TOKEN"}'
+        static-secrets: '{"/actions/grapes/hcloud_token":"HCLOUD_TOKEN"}'
     - name: Setup hetzner-k3s cli
       run: |
         curl -fsSL -o /tmp/hetzner-k3s-linux-amd64 https://github.com/vitobotta/hetzner-k3s/releases/latest/download/hetzner-k3s-linux-amd64
