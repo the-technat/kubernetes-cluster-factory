@@ -39,10 +39,11 @@ module "eks" {
   cloudwatch_log_group_kms_key_id        = module.cloudwatch_kms_key.key_arn
 
   # KMS
-  kms_key_owners = [
-    aws_iam_role.cluster_admin.arn,       # the user accessing the cluster
-    data.aws_caller_identity.current.arn, # the creator of the cluster 
-  ]
+  create_kms_key = false
+  cluster_encryption_config = {
+    resources        = ["secrets"]
+    provider_key_arn = module.eks_kms_key.key_arn
+  }
 
   # IAM
   enable_irsa               = true
