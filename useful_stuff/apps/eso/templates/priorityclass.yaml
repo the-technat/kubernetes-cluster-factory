@@ -1,7 +1,0 @@
-apiVersion: scheduling.k8s.io/v1
-description: Used for infrastructure pods that must run in the cluster, before apps can run
-kind: PriorityClass
-metadata:
-  name: infra
-preemptionPolicy: PreemptLowerPriority
-value: 1000000000

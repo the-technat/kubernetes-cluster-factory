@@ -4,16 +4,16 @@ kubeconfig_path: "./output/kubeconfig"
 k3s_version: {{.k3s_version}}
 public_ssh_key_path: "./output/id_ed25519.pub"
 private_ssh_key_path: "./output/id_ed25519"
-private_network_subnet: 10.0.0.0/16 # ensure this doesn't overlap with other networks in the same project
+private_network_subnet: 192.168.111.0/24 # ensure this doesn't overlap with other networks in the same project
 ssh_allowed_networks:
   - 0.0.0.0/0 # ensure your current IP is included in the range
 api_allowed_networks:
   - 0.0.0.0/0 # ensure your current IP is included in the range
 disable_flannel: true
 schedule_workloads_on_masters: false
-# cluster_cidr: 10.244.0.0/16 # optional: a custom IPv4/IPv6 network CIDR to use for pod IPs
-# service_cidr: 10.43.0.0/16 # optional: a custom IPv4/IPv6 network CIDR to use for service IPs
-# cluster_dns: 10.43.0.10 # optional: IPv4 Cluster IP for coredns service. Needs to be an address from the service_cidr range
+cluster_cidr: 10.123.0.0/16 
+service_cidr: 10.127.0.0/16 
+cluster_dns: 10.127.0.10 
 cloud_controller_manager_manifest_url: "https://github.com/hetznercloud/hcloud-cloud-controller-manager/raw/main/deploy/ccm-networks.yaml"
 csi_driver_manifest_url: "https://github.com/hetznercloud/csi-driver/raw/main/deploy/kubernetes/hcloud-csi.yml"
 system_upgrade_controller_manifest_url: "https://github.com/rancher/system-upgrade-controller/raw/master/manifests/system-upgrade-controller.yaml"
