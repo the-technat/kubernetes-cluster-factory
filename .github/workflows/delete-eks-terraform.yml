@@ -19,7 +19,7 @@ jobs:
       STATE_BUCKET_REGION: "eu-west-1"
     steps:
     - uses: unfor19/install-aws-cli-action@v1
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Fetch secrets from AKeyless
       id: fetch-secrets
       uses: LanceMcCarthy/akeyless-action@v3
