@@ -116,6 +116,15 @@ jobs:
         aws_access_key_id: ${{ env.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ env.AWS_SECRET_ACCESS_KEY }}
         aws_region: ${{ env.STATE_BUCKET_REGION }}
+    - name: Rollback variables file
+      if: failure()
+      uses: keithweaver/aws-s3-github-action@v1.0.0
+      with:
+        command: rm
+        source: s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }}.tfvars
+        aws_access_key_id: ${{ env.AWS_ACCESS_KEY_ID }}
+        aws_secret_access_key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+        aws_region: ${{ env.STATE_BUCKET_REGION }}
     - name: Terraform Output
       run: terraform -chdir=eks-terraform output > $GITHUB_STEP_SUMMARY
     - name: Upload artifacts
