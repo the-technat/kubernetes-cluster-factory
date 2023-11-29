@@ -39,15 +39,6 @@ on:
         type: string
         default: "1"
         description: Number of worker nodes to deploy (per AZ)
-      loglevel: 
-        type: choice
-        description: "Terraform log level"
-        options:
-          - trace
-          - debug
-          - info
-          - warn
-          - error
 
 jobs:
   deploy:
@@ -58,7 +49,6 @@ jobs:
     env:
       STATE_BUCKET: "grapes-state"
       STATE_BUCKET_REGION: "eu-west-1"
-      TF_LOG: ${{ github.event.inputs.loglevel }}
     steps:
     - uses: unfor19/install-aws-cli-action@v1
     - uses: actions/checkout@v4
