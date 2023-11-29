@@ -55,13 +55,6 @@ module "eks" {
       groups   = ["system:masters"]
     },
   ]
-  aws_auth_users = [
-    {
-      rolearn  = data.aws_caller_identity.current.arn
-      username = data.aws_caller_identity.current.user_id
-      groups   = ["system:masters"]
-    }
-  ]
 
   // settings in this block apply to all nodes groups
   eks_managed_node_group_defaults = {
