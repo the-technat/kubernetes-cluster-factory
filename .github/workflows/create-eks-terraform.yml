@@ -123,3 +123,5 @@ jobs:
         name: outputs-${{ github.event.inputs.name }}
         path: |
           eks-terraform/ 
+          !eks-terraform/.terraform/
+          !eks-terraform/.terraform.lock.hcl
