@@ -55,6 +55,7 @@ And some prerequisites are also required:
 ## Known-issues
 
 - Hetzner-k3s: cilium installation doesn't quite work as expected (kube-proxy replacement can't be controlled)
+- EKS-terraform: login creds are just terraform outputs
 
 ## Ideas
 
