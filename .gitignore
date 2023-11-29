@@ -1,5 +1,7 @@
 # Local .terraform directories
 **/.terraform/*
 **.tfstate
+**.tfbackend
+**.terraform.lock.hcl
 kubeconfig
 output/
