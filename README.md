@@ -10,20 +10,21 @@ As a Kubernetes Engineer I sometimes just need a Kubernetes environment that I c
 
 - Add as many install methods as you like, just create a new folder and add two workflow files (one for creation, one for deletion)
   - the customization of each cluster should be limited to 10 inputs parameters (limit of github actions)
-  - use exact versions (and rely on dependabot or so to update them)
-  - only one cluster per method at a time must be possible
-- Requirements:
+  - use exact versions (and rely on renovate to update them)
+  - only one cluster per method at a time must be possible (more is optional)
+- Tech Requirements:
   - The workflow should create a small cluster
-  - the API must be public accessable 
+  - the API must be public accessible 
   - the Service CIDR range must be `10.127.0.0/16`
   - the Pod CIDR range must be `10.123.0.0/16`
-  - Install a CNI (or offer multiple options)
-  - Install a CCM if necessary (some services already have this included)
+  - Install a CNI 
+  - Install a CCM if necessary (some distributions already have this included)
     - should provide block-storage
     - should provide service `type:LoadBalancer` implementation
-  - Leave the rest unopiniated
+    - optionally deploy them yourself
+  - Leave the rest open to the user
 - Credentials should be retrieved from Akeyless via Github Actions
-- The worklflow should pill out all required artifacts to connect to the cluster/nodes as well as any required articats to further tweak the cluster locally
+- The worklflow should pill out all required artifacts to connect to the cluster/nodes as well as any required artifacts to further tweak the cluster locally (e.g config or terraform files)
 - Code snippets how to solve certain use-cases should be put in the `useful_stuff` folder so that one could use them after the cluster is created
 
 ## Installation Methods
