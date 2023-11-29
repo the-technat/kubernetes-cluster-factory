@@ -59,13 +59,6 @@ module "eks" {
   // settings in this block apply to all nodes groups
   eks_managed_node_group_defaults = {
     use_name_prefix = true
-    taints = [
-      {
-        key    = "node.cilium.io/agent-not-ready"
-        value  = "true"
-        effect = "NO_EXECUTE"
-      },
-    ]
     metadata_options = {
       http_endpoint               = "enabled"
       http_tokens                 = "required"
@@ -122,9 +115,17 @@ module "eks" {
   }
 
   eks_managed_node_groups = {
-    workers = {
-      name       = "${var.name}-${local.azs[each.count]}"
-      subnet_ids = [module.vpc.private_subnets[each.count]]
+    workers-a = {
+      name       = "${var.name}-a"
+      subnet_ids = [module.vpc.private_subnets[0]]
+    }
+    workers-b = {
+      name       = "${var.name}-b"
+      subnet_ids = [module.vpc.private_subnets[1]]
+    }
+    workers-c = {
+      name       = "${var.name}-c"
+      subnet_ids = [module.vpc.private_subnets[2]]
     }
   }
 

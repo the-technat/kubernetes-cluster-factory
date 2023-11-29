@@ -5,7 +5,8 @@ locals {
     repo       = "github.com/the-technat/grapes"
     managed-by = "terraform"
   }
-  azs = var.ha ? slice(data.aws_availability_zones.available.names, 0, 3) : slice(data.aws_availability_zones.available.names, 0, 1)
+  azs  = slice(data.aws_availability_zones.available.names, 0, 3)
+  cidr = "10.123.0.0/16"
 }
 
 data "aws_availability_zones" "available" {}

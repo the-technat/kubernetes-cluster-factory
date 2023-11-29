@@ -6,12 +6,8 @@ variable "region" {
   type = string
 }
 
-variable "ha" {
+variable "single_nat_gateway" {
   type = bool
-}
-
-variable "cidr" {
-  type = string
 }
 
 variable "eks_version" {

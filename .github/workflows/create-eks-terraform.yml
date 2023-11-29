@@ -1,0 +1,116 @@
+name: Create eks-terraform cluster
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        type: string
+        default: ""
+        description: Name of the cluster
+        required: true
+      region:
+        type: choice
+        description: AWS Region to deploy 
+        default: "eu-central-2"
+        options:
+          - "eu-central-1"
+          - "eu-central-2"
+          - "eu-west-1"
+          - "eu-west-2"
+          - "eu-west-3"
+          - "eu-north-1"
+          - "sa-east-1"
+      single_nat_gateway:
+        type: boolean
+        description: "Deploy the NAT gateway only in one AZ (saves cost)"
+        default: true
+      eks_version:
+        type: choice
+        default: "1.28"
+        options:
+        - "1.24"
+        - "1.25"
+        - "1.25"
+        - "1.26"
+        - "1.27"
+        - "1.28"
+        description: Version of eks to deploy
+      worker_count:
+        type: string
+        default: "1"
+        description: Number of worker nodes to deploy (per AZ)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write
+      contents: read
+    env:
+      STATE_BUCKET: "grapes-state"
+      STATE_BUCKET_REGION: "eu-west-1"
+    steps:
+    - uses: unfor19/install-aws-cli-action@v1
+    - uses: actions/checkout@v3
+    - name: Fetch secrets from AKeyless
+      id: fetch-secrets
+      uses: LanceMcCarthy/akeyless-action@v3
+      with:
+        access-id: ${{ secrets.AKEYLESS_ACCESS_ID }}
+        static-secrets: '{"/actions/grapes/aws_access_key":"AWS_ACCESS_KEY_ID", "/actions/grapes/aws_secret_access_key": "AWS_SECRET_ACCESS_KEY"}'
+    - name: Create Terraform backend configuration
+      run: |
+        tee eks-terraform/s3.tfbackend << END
+          bucket = "${{ env.STATE_BUCKET }}"
+          key    = "${{ github.event.inputs.name }}"
+          region = "${{ env.STATE_BUCKET_REGION }}"
+        END
+    - name: Create variables file
+      run: |
+        tee eks-terraform/${{ github.event.inputs.name }}.tfvars << END
+          name         = "${{ github.event.inputs.name }}"
+          region       = "${{ github.event.inputs.region }}"
+          single_nat_gateway = "${{ github.event.inputs.single_nat_gateway }}"
+          cidr         = "${{ github.event.inputs.cidr }}"
+          eks_version  = "${{ github.event.inputs.eks_version }}"
+          worker_count = "${{ github.event.inputs.worker_count }}"
+        END
+    - name: Save variables file to s3
+      uses: keithweaver/aws-s3-github-action@v1.0.0
+      with:
+        command: cp
+        source: eks-terraform/${{ github.event.inputs.name }}.tfvars
+        destination: s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }}.tfvars
+        aws_access_key_id: ${{ env.AWS_ACCESS_KEY_ID }}
+        aws_secret_access_key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+        aws_region: ${{ env.STATE_BUCKET_REGION }}
+    - name: Setup terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.6.3
+        terraform_wrapper: false
+    - name: Terraform Init
+      id: init
+      run: terraform -chdir=eks-terraform init -backend-config=s3.tfbackend
+    - name: Terraform Apply 
+      run: terraform -chdir=eks-terraform apply -auto-approve -input=false -var-file ${{ github.event.inputs.name }}.tfvars
+    - name: Rollback cluster
+      if: failure()
+      run: terraform -chdir=eks-terraform destroy -auto-approve -input=false -var-file ${{ github.event.inputs.name }}.tfvars
+    - name: Rollback state
+      if: failure()
+      uses: keithweaver/aws-s3-github-action@v1.0.0
+      with:
+        command: rm
+        source: s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }}
+        aws_access_key_id: ${{ env.AWS_ACCESS_KEY_ID }}
+        aws_secret_access_key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+        aws_region: ${{ env.STATE_BUCKET_REGION }}
+    - name: Terraform Output
+      run: terraform -chdir=eks-terraform output > $GITHUB_STEP_SUMMARY
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: outputs-${{ github.event.inputs.name }}
+        path: |
+          eks-terraform/ 

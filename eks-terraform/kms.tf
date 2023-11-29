@@ -15,7 +15,7 @@ module "ebs_kms_key" {
   source  = "terraform-aws-modules/kms/aws"
   version = "2.1.0"
 
-  aliases                 = ["eks/${var.cluster_name}/ebs"]
+  aliases                 = ["eks/${var.name}/ebs"]
   description             = "Customer managed key to encrypt EKS managed node group volumes"
   deletion_window_in_days = 7
   key_owners              = [aws_iam_role.cluster_admin.arn, data.aws_caller_identity.current.arn]

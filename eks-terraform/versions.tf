@@ -1,4 +1,5 @@
 terraform {
+  backend "s3" {} # github actions will configure the rest
   required_version = ">= 1.0"
 
   required_providers {

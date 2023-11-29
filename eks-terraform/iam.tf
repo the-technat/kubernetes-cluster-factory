@@ -1,6 +1,8 @@
 resource "aws_iam_role_policy_attachment" "account_admin" {
   role       = aws_iam_role.cluster_admin.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+
+  depends_on = [aws_iam_user.eks_admin] 
 }
 
 resource "aws_iam_role" "cluster_admin" {
@@ -11,13 +13,21 @@ resource "aws_iam_role" "cluster_admin" {
 data "aws_iam_policy_document" "cluster_admin_assume" {
   statement {
     actions = ["sts:AssumeRole"]
-    dynamic "principals" {
-      for_each = local.cluster_admins
-      content {
-        type        = "AWS"
-        identifiers = [principals.value["userarn"]]
-      }
+    principals {
+			type        = "AWS"
+			identifiers = [aws_iam_user.eks_admin.arn]
     }
   }
+  depends_on = [aws_iam_user.eks_admin] 
+}
+
+resource "aws_iam_user" "eks_admin" {
+  name = "eks_admin_${var.name}"
+
+  tags = local.tags
+}
+
+resource "aws_iam_access_key" "eks_admin" {
+  user = aws_iam_user.eks_admin.name
 }
 
