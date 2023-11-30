@@ -71,7 +71,6 @@ jobs:
           name         = "${{ github.event.inputs.name }}"
           region       = "${{ github.event.inputs.region }}"
           single_nat_gateway = "${{ github.event.inputs.single_nat_gateway }}"
-          cidr         = "${{ github.event.inputs.cidr }}"
           eks_version  = "${{ github.event.inputs.eks_version }}"
           worker_count = "${{ github.event.inputs.worker_count }}"
         END
