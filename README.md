@@ -50,7 +50,7 @@ And some prerequisites are also required:
 - (if possible) a dedicated AWS accoun
 - IAM user with admin privileges
 - state bucket in a region (created manually)
-
+- [account-nuker](https://github.com/the-technat/account-nuker) that regurarly nukes left-over resources
 
 ## Known-issues
 
