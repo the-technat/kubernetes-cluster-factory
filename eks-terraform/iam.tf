@@ -6,11 +6,16 @@ resource "aws_iam_role" "cluster_admin" {
 resource "aws_iam_role_policy_attachment" "account_admin" {
   role       = aws_iam_role.cluster_admin.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-
-  depends_on = [aws_iam_user.eks_admin]
 }
 
 data "aws_iam_policy_document" "cluster_admin_assume" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
   statement {
     actions = ["sts:AssumeRole"]
     principals {

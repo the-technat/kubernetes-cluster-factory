@@ -9,6 +9,7 @@ output "account_id" {
 }
 output "intructions" {
   value = <<EOT
-   As soon as you can assume the EKSClusterAdmin role, you are all good
+   As soon as you can assume the ${var.name}-admin role, you are all good
+   This could be an IAM user or an EC2-instance
  EOT
 }
