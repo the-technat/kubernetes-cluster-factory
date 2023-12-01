@@ -1,5 +1,5 @@
 resource "aws_iam_role" "cluster_admin" {
-  name               = "EKSClusterAdmin"
+  name               = "${var.name}-admin"
   assume_role_policy = data.aws_iam_policy_document.cluster_admin_assume.json
 }
 
