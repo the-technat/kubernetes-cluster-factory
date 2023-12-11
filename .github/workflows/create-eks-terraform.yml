@@ -57,7 +57,14 @@ jobs:
       uses: LanceMcCarthy/akeyless-action@v3
       with:
         access-id: ${{ secrets.AKEYLESS_ACCESS_ID }}
-        static-secrets: '{"/actions/grapes/aws_access_key":"AWS_ACCESS_KEY_ID", "/actions/grapes/aws_secret_access_key": "AWS_SECRET_ACCESS_KEY"}'
+        static-secrets: '{"/actions/grapes/aws_access_key":"ADMIN_AWS_ACCESS_KEY_ID", "/actions/grapes/aws_secret_access_key": "ADMIN_AWS_SECRET_ACCESS_KEY"}'
+    - name: Create AWS user for interaction with cluster
+      run: |
+        aws iam create-user --user-name ${{ github.event.inputs.name }}
+        aws iam attach-user-policy --policy-arn "arn:aws:iam::aws:policy/AdministratorAccess" --user-name ${{ github.event.inputs.name }}
+        aws iam create-access-key --user-name ${{ github.event.inputs.name }} --output=json > output.json
+        echo 'AWS_ACCES_KEY_ID=$(cat output.json | jq '.AccessKey.AccessKeyId' |tr -d "\"")' >> $GITHUB_ENV
+        echo 'AWS_ACCES_KEY_ID=$(cat output.json | jq '.AccessKey.SecretAccessKey' |tr -d "\"")' >> $GITHUB_ENV
     - name: Create Terraform backend configuration
       run: |
         tee eks-terraform/s3.tfbackend << END

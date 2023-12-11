@@ -38,24 +38,20 @@ This method installs k3s on Hcloud using a cool shell script, which you can find
 This method uses the official [terraform-aws-eks](https://github.com/terraform-aws-modules/terraform-aws-eks) module to deploy an EKS cluster using a minimal config.
 
 This method has some sane defaults for cluster installation:
-- everything is encrypted using custom KMS keys
+- KMS encryption is disabled everywhere (due to problematic ownership + not needed for lab purposes)
 - everything is fully HA (except the NAT gateways)
-- we reuse the SG created by EKS for all worker nodes (and disable all other SGs)
-- we store logs for 30 days in cloudwatch 
 - we use `x86_64` nodes (could easily be changed to `amd64`)
-- to access/delete/manage the cluster you either need to be the user who created the cluster or have the role `EKSClusterAdmin` assumed 
 - AWS SSM is enabled for the nodes
 
 And some prerequisites are also required:
-- (if possible) a dedicated AWS accoun
-- IAM user with admin privileges
+- (if possible) a dedicated AWS account
+- IAM user with admin privileges to create dedicated tinkering users
 - state bucket in a region (created manually)
 - [account-nuker](https://github.com/the-technat/account-nuker) that regurarly nukes left-over resources
 
 ## Known-issues
 
 - Hetzner-k3s: cilium installation doesn't quite work as expected (kube-proxy replacement can't be controlled)
-- EKS-terraform: login creds are just terraform outputs
 
 ## Ideas
 
