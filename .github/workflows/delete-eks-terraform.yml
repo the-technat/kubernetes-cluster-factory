@@ -9,7 +9,7 @@ on:
         description: Name of the cluster
 
 jobs:
-  deploy:
+  reprepare:
     runs-on: ubuntu-latest
     permissions: 
       id-token: write
@@ -18,45 +18,59 @@ jobs:
       STATE_BUCKET: "grapes-state"
       STATE_BUCKET_REGION: "eu-west-1"
     steps:
-    - uses: unfor19/install-aws-cli-action@v1
     - uses: actions/checkout@v4
-    - name: Fetch secrets from AKeyless
-      id: fetch-secrets
-      uses: LanceMcCarthy/akeyless-action@v3
+    - name: configure aws credentials
+      uses: aws-actions/configure-aws-credentials@v3
       with:
-        access-id: ${{ secrets.AKEYLESS_ACCESS_ID }}
-        static-secrets: '{"/actions/grapes/aws_access_key":"AWS_ACCESS_KEY_ID", "/actions/grapes/aws_secret_access_key": "AWS_SECRET_ACCESS_KEY"}'
-    - name: Create Terraform backend configuration
+        role-to-assume: arn:aws:iam::296119450228:role/grapes
+        role-session-name: grapes
+        region: ${{ env.STATE_BUCKET_REGION }}
+    - name: Rotate credentials for cluster user
       run: |
-        tee eks-terraform/s3.tfbackend << END
-          bucket = "${{ env.STATE_BUCKET }}"
-          key    = "${{ github.event.inputs.name }}"
-          region = "${{ env.STATE_BUCKET_REGION }}"
-        END
-    - name: Grab variables file from s3
-      uses: keithweaver/aws-s3-github-action@v1.0.0
-      with:
-        command: mv
-        source: s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }}.tfvars
-        destination: eks-terraform/${{ github.event.inputs.name }}.tfvars
-        aws_access_key_id: ${{ env.AWS_ACCESS_KEY_ID }}
-        aws_secret_access_key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-        aws_region: ${{ env.STATE_BUCKET_REGION }}
+        aws iam create-access-key --user-name ${{ github.event.inputs.name }} --output=json > output.json
+        echo 'cluster_access_key=$(cat output.json | jq '.AccessKey.AccessKeyId' |tr -d "\"")' >> $GITHUB_ENV
+        echo 'cluster_secret_key=$(cat output.json | jq '.AccessKey.SecretAccessKey' |tr -d "\"")' >> $GITHUB_ENV
+   
+  destroy: 
+    needs: reprepare
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: "${{ env.cluster_access_key }}"
+      AWS_SECRET_ACCESS_KEY: "${{ env.cluster_secret_key }}"
+      AWS_REGION: "${{ github.event.inputs.region }}"
+    steps:
+    - name: Grab Terraform files from bucket
+      run: aws mv s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} eks-terraform
     - name: Setup terraform
       uses: hashicorp/setup-terraform@v3
       with:
-        terraform_version: 1.6.3
+        terraform_version: 1.6.5
         terraform_wrapper: false
     - name: Terraform Init
       id: init
       run: terraform -chdir=eks-terraform init -backend-config=s3.tfbackend
     - name: Terraform Destroy
-      run: terraform -chdir=eks-terraform destroy -auto-approve -input=false -var-file ${{ github.event.inputs.name }}.tfvars
+      env:
+        AWS_ACCESS_KEY_ID: "${{ env.cluster_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "${{ env.cluster_secret_key }}"
+        AWS_REGION: "${{ github.event.inputs.region }}"
+      run: terraform -chdir=eks-terraform destroy -auto-approve -input=false -var-file vars.tfvars
     - name: Delete state
-      uses: keithweaver/aws-s3-github-action@v1.0.0
+      if: always()
+      run: aws rm s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }}
+  cleanup:
+    needs: destroy
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write
+      contents: read
+    steps:
+    - name: configure aws credentials
+      uses: aws-actions/configure-aws-credentials@v3
       with:
-        command: rm
-        source: s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }}
-        aws_access_key_id: ${{ env.AWS_ACCESS_KEY_ID }}
-        aws_secret_access_key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-        aws_region: ${{ env.STATE_BUCKET_REGION }}
+        role-to-assume: arn:aws:iam::296119450228:role/grapes
+        role-session-name: grapes
+        region: ${{ env.STATE_BUCKET_REGION }}
+    - name: Delete cluster user
+      if: always()
+      run: aws iam delete-user --user-name ${{ github.event.inputs.name }}

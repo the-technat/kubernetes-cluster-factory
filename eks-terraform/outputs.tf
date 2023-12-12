@@ -9,7 +9,7 @@ output "account_id" {
 }
 output "intructions" {
   value = <<EOT
-   As soon as you assumed the ${var.name}-admin role, you are ready to tinker.
-   Use the specificed principal to access the cluster.
+   Rotate the credentials for the user ${var.name} in AWS IAM
+   And configure yourself access to the cluster via these credentials
  EOT
 }
