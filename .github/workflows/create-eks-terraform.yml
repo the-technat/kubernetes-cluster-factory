@@ -97,10 +97,11 @@ jobs:
         path: eks-terraform
     - name: Configure aws env vars
       run: |
-        cluster_access_key=$(cat eks-terraform/creds.json | jq '.AccessKey.AccessKeyId' |tr -d "\"")
-        cluster_secret_key=$(cat eks-terraform/creds.json | jq '.AccessKey.SecretAccessKey' |tr -d "\"")
-        echo "AWS_ACCESS_KEY_ID=$cluster_access_key" >> $GITHUB_ENV
-        echo "AWS_SECRET_ACCESS_KEY=$cluster_secret_key" >> $GITHUB_ENV
+        mkdir -p $HOME/.aws/
+        tee $HOME/.aws/credentials << END
+          aws_access_key_id = $(cat eks-terraform/creds.json | jq '.AccessKey.AccessKeyId' |tr -d "\"")
+          aws_secret_access_key = $(cat eks-terraform/creds.json | jq '.AccessKey.SecretAccessKey' |tr -d "\"")
+        END
     - name: Setup terraform
       uses: hashicorp/setup-terraform@v3
       with:
