@@ -24,7 +24,7 @@ jobs:
       with:
         role-to-assume: arn:aws:iam::296119450228:role/grapes
         role-session-name: grapes
-        region: ${{ env.STATE_BUCKET_REGION }}
+        aws-region: ${{ env.STATE_BUCKET_REGION }}
     - name: Rotate credentials for cluster user
       run: |
         aws iam create-access-key --user-name ${{ github.event.inputs.name }} --output=json > output.json

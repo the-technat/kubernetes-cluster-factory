@@ -55,7 +55,7 @@ jobs:
       with:
         role-to-assume: arn:aws:iam::296119450228:role/grapes
         role-session-name: grapes
-        region: ${{ env.STATE_BUCKET_REGION }}
+        aws-region: ${{ env.STATE_BUCKET_REGION }}
     - name: Create Terraform backend configuration
       run: |
         tee eks-terraform/s3.tfbackend << END
