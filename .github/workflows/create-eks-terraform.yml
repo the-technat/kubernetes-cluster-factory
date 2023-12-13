@@ -86,6 +86,7 @@ jobs:
         aws --region ${{ env.STATE_BUCKET_REGION }} s3 sync eks-terraform/ s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }}
     - name: Setup terraform
       uses: hashicorp/setup-terraform@v3
+      if: ${{ github.event.inputs.skip_deploy == false }}
       with:
         terraform_version: 1.6.5
         terraform_wrapper: false
@@ -96,14 +97,14 @@ jobs:
     - name: Terraform Apply 
       if: ${{ github.event.inputs.skip_deploy == false }}
       run: terraform -chdir=eks-terraform apply -auto-approve -input=false -var-file vars.tfvars
-    - name: Rollback cluster
-      if: failure() && ${{ github.event.inputs.skip_deploy == false }} 
-      run: terraform -chdir=eks-terraform destroy -auto-approve -input=false -var-file vars.tfvars
     - name: Terraform Output
-      if: success() && ${{ github.event.inputs.skip_deploy == false }} 
+      if: ${{ github.event.inputs.skip_deploy == false }} 
       run: terraform -chdir=eks-terraform output > $GITHUB_STEP_SUMMARY
+    - name: Rollback cluster
+      if: ${{ failure() || github.event.inputs.skip_deploy == false }} 
+      run: terraform -chdir=eks-terraform destroy -auto-approve -input=false -var-file vars.tfvars
     - name: Rollback state
-      if: failure() && ${{ github.event.inputs.skip_deploy == false }}
+      if: ${{ failure() || github.event.inputs.skip_deploy == false }}
       run: |
         aws --region ${{ env.STATE_BUCKET_REGION }} s3 rm s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} --recursive
         aws --region ${{ env.STATE_BUCKET_REGION }} s3 rm s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }}-state

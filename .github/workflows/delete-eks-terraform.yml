@@ -56,6 +56,8 @@ jobs:
     - name: Delete cluster user
       if: always()
       run: |
+        id=$(aws iam list-access-keys --user-name ${{ github.event.inputs.name }} | jq '.AccessKeyMetadata[0].AccessKeyId' | tr -d "\"") 
+        aws iam delete-access-key --user-name ${{ github.event.inputs.name }} --access-key-id $id
         aws iam detach-user-policy --user-name ${{ github.event.inputs.name }} --policy-arn "arn:aws:iam::aws:policy/AdministratorAccess"
         aws iam delete-user --user-name ${{ github.event.inputs.name }}
     - name: Delete state + config
