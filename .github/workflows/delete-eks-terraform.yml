@@ -20,7 +20,7 @@ on:
           - "sa-east-1"
 
 env:
-  STATE_BUCKET: "grapes-state"
+  STATE_BUCKET: "grapesstate"
   STATE_BUCKET_REGION: "eu-west-1" 
 
 jobs:
