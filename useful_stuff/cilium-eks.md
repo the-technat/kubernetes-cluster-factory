@@ -101,9 +101,6 @@ priorityClassName: "system-node-critical"
 annotateK8sNode: true
 policyEnforcementMode: "always"
 policyAuditMode: true
-containerRuntime:
-  integration: containerd
-  socketPath: /var/run/containerd/containerd.sock
 
 ## Resources and security-contexts + hubble ui configs
 operator:
@@ -165,11 +162,6 @@ hubble:
         requests:
           cpu: 100m
           memory: 24Mi
-    tolerations:
-      - operator: Equal
-        key: "beta.kubernetes.io/arch"
-        value: "arm64"
-        effect: "NoExecute"
 resources:
   requests:
     cpu: 300m
