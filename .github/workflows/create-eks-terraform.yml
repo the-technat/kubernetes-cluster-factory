@@ -81,8 +81,8 @@ jobs:
         aws iam create-user --user-name ${{ github.event.inputs.name }}
         aws iam attach-user-policy --policy-arn "arn:aws:iam::aws:policy/AdministratorAccess" --user-name ${{ github.event.inputs.name }}
         aws iam create-access-key --user-name ${{ github.event.inputs.name }} --output=json > output.json
-        echo 'cluster_access_key=$(cat output.json | jq '.AccessKey.AccessKeyId' |tr -d "\"")' >> $GITHUB_ENV
-        echo 'cluster_secret_key=$(cat output.json | jq '.AccessKey.SecretAccessKey' |tr -d "\"")' >> $GITHUB_ENV
+        echo 'cluster_access_key=$(cat output.json | jq '.AccessKey.AccessKeyId' |tr -d "\"")' >> $GITHUB_OUTPUT
+        echo 'cluster_secret_key=$(cat output.json | jq '.AccessKey.SecretAccessKey' |tr -d "\"")' >> $GITHUB_OUTPUT
   deploy:
     runs-on: ubuntu-latest
     needs: prepare

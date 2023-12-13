@@ -25,8 +25,8 @@ jobs:
     - name: Rotate credentials for cluster user
       run: |
         aws iam create-access-key --user-name ${{ github.event.inputs.name }} --output=json > output.json
-        echo 'cluster_access_key=$(cat output.json | jq '.AccessKey.AccessKeyId' |tr -d "\"")' >> $GITHUB_ENV
-        echo 'cluster_secret_key=$(cat output.json | jq '.AccessKey.SecretAccessKey' |tr -d "\"")' >> $GITHUB_ENV
+        echo 'cluster_access_key=$(cat output.json | jq '.AccessKey.AccessKeyId' |tr -d "\"")' >> $GITHUB_OUTPUT
+        echo 'cluster_secret_key=$(cat output.json | jq '.AccessKey.SecretAccessKey' |tr -d "\"")' >> $GITHUB_OUTPUT
    
   destroy: 
     needs: reprepare
