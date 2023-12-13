@@ -8,44 +8,22 @@ on:
         default: ""
         description: Name of the cluster
 
+env:
+  STATE_BUCKET: "grapes-state"
+  AWS_REGION: "eu-west-1" # only bucket, terraform can run elsewhere
+
 jobs:
-  reprepare:
-    runs-on: ubuntu-latest
-    permissions: 
-      id-token: write
-      contents: read
-    outputs:
-      output1: ${{ steps.aws_user.outputs.cluster_access_key }}
-      output2: ${{ steps.aws_user.outputs.cluster_secret_key }}
-    steps:
-    - uses: actions/checkout@v4
-    - name: configure aws credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: arn:aws:iam::296119450228:role/grapes
-        role-session-name: grapes
-        aws-region: eu-central-1 # doesn't matter for IAM
-    - name: Rotate credentials for cluster user
-      id: aws_user
-      run: |
-        aws iam create-access-key --user-name ${{ github.event.inputs.name }} --output=json > output.json
-        cluster_access_key=$(cat output.json | jq '.AccessKey.AccessKeyId' |tr -d "\"")
-        cluster_secret_key=$(cat output.json | jq '.AccessKey.SecretAccessKey' |tr -d "\"")
-        echo "cluster_access_key=$cluster_access_key" >> $GITHUB_OUTPUT
-        echo "cluster_secret_key=$cluster_secret_key" >> $GITHUB_OUTPUT
-        rm output.json
   destroy: 
-    needs: reprepare
     runs-on: ubuntu-latest
-    env:
-      AWS_ACCESS_KEY_ID: "${{ needs.reprepare.aws_user.outputs.cluster_access_key }}"
-      AWS_SECRET_ACCESS_KEY: "${{ needs.reprepare.aws_user.outputs.cluster_secret_key }}"
-      AWS_REGION: "${{ github.event.inputs.region }}"
-      STATE_BUCKET: "grapes-state"
-      STATE_BUCKET_REGION: "eu-west-1"
     steps:
     - name: Grab Terraform files from bucket
-      run: aws --region ${{ env.STATE_BUCKET_REGION }} mv s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} eks-terraform --recursive
+      run: aws mv s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} eks-terraform --recursive
+    - name: Configure aws env vars
+      run: |
+        cluster_access_key=$(cat eks-terraform/creds.json | jq '.AccessKey.AccessKeyId' |tr -d "\"")
+        cluster_secret_key=$(cat eks-terraform/creds.json | jq '.AccessKey.SecretAccessKey' |tr -d "\"")
+        echo "AWS_ACCESS_KEY_ID=$cluster_access_key" >> $GITHUB_ENV
+        echo "AWS_ACCESS_SECRET_KEY=$cluster_secret_key" >> $GITHUB_ENV
     - name: Setup terraform
       uses: hashicorp/setup-terraform@v3
       with:
@@ -55,14 +33,7 @@ jobs:
       id: init
       run: terraform -chdir=eks-terraform init -backend-config=s3.tfbackend
     - name: Terraform Destroy
-      env:
-        AWS_ACCESS_KEY_ID: "${{ env.cluster_access_key }}"
-        AWS_SECRET_ACCESS_KEY: "${{ env.cluster_secret_key }}"
-        AWS_REGION: "${{ github.event.inputs.region }}"
       run: terraform -chdir=eks-terraform destroy -auto-approve -input=false -var-file vars.tfvars
-    - name: Delete state
-      if: always()
-      run: aws --region ${{ env.STATE_BUCKET_REGION }} rm s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} --recursive
   cleanup:
     needs: destroy
     runs-on: ubuntu-latest
@@ -75,7 +46,10 @@ jobs:
       with:
         role-to-assume: arn:aws:iam::296119450228:role/grapes
         role-session-name: grapes
-        aws-region: eu-central-1 # doesn't matter for IAM
+        aws-region: ${{ env.AWS_REGION }} 
     - name: Delete cluster user
       if: always()
       run: aws iam delete-user --user-name ${{ github.event.inputs.name }}
+    - name: Delete state
+      if: always()
+      run: aws rm s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} --recursive

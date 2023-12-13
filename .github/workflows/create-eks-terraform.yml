@@ -1,5 +1,9 @@
 name: Create eks-terraform cluster
 
+env:
+  STATE_BUCKET: "grapes-state"
+  AWS_REGION: "eu-west-1" # terraform can run elsewhere
+
 on:
   workflow_dispatch:
     inputs:
@@ -45,12 +49,6 @@ jobs:
     permissions: 
       id-token: write
       contents: read
-    env:
-      STATE_BUCKET: "grapes-state"
-      STATE_BUCKET_REGION: "eu-west-1"
-    outputs:
-      output1: ${{ steps.aws_user.outputs.cluster_access_key }}
-      output2: ${{ steps.aws_user.outputs.cluster_secret_key }}
     steps:
     - uses: actions/checkout@v4
     - name: configure aws credentials
@@ -58,13 +56,19 @@ jobs:
       with:
         role-to-assume: arn:aws:iam::296119450228:role/grapes
         role-session-name: grapes
-        aws-region: ${{ env.STATE_BUCKET_REGION }}
+        aws-region: ${{ env.AWS_REGION }}
+    - name: Create IAM user for terraform
+      id: aws_user
+      run: |
+        aws iam create-user --user-name ${{ github.event.inputs.name }}
+        aws iam attach-user-policy --policy-arn "arn:aws:iam::aws:policy/AdministratorAccess" --user-name ${{ github.event.inputs.name }}
+        aws iam create-access-key --user-name ${{ github.event.inputs.name }} --output=json > eks-terraform/creds.json
     - name: Create Terraform backend configuration
       run: |
         tee eks-terraform/s3.tfbackend << END
           bucket     = "${{ env.STATE_BUCKET }}"
           key        = "${{ github.event.inputs.name }}-state"
-          region     = "${{ env.STATE_BUCKET_REGION }}"
+          region     = "${{ env.AWS_REGION }}"
         END
     - name: Create variables file
       run: |
@@ -78,29 +82,18 @@ jobs:
     - name: Save Terraform configuration to s3 bucket
       run: |
         aws s3 sync eks-terraform/ s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }}
-    - name: Create IAM user for terraform
-      id: aws_user
-      run: |
-        aws iam create-user --user-name ${{ github.event.inputs.name }}
-        aws iam attach-user-policy --policy-arn "arn:aws:iam::aws:policy/AdministratorAccess" --user-name ${{ github.event.inputs.name }}
-        aws iam create-access-key --user-name ${{ github.event.inputs.name }} --output=json > output.json
-        cluster_access_key=$(cat output.json | jq '.AccessKey.AccessKeyId' |tr -d "\"")
-        cluster_secret_key=$(cat output.json | jq '.AccessKey.SecretAccessKey' |tr -d "\"")
-        echo "cluster_access_key=$cluster_access_key" >> $GITHUB_OUTPUT
-        echo "cluster_secret_key=$cluster_secret_key" >> $GITHUB_OUTPUT
-        rm output.json
   deploy:
     runs-on: ubuntu-latest
     needs: prepare
-    env:
-      AWS_ACCESS_KEY_ID: "${{ needs.prepare.outputs.cluster_access_key }}"
-      AWS_SECRET_ACCESS_KEY: "${{ needs.prepare.outputs.cluster_secret_key }}"
-      AWS_REGION: "${{ github.event.inputs.region }}"
-      STATE_BUCKET: "grapes-state"
-      STATE_BUCKET_REGION: "eu-west-1"
     steps:
     - name: Grab Terraform configuration from s3 bucket
       run: aws s3 sync s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} eks-terraform
+    - name: Configure aws env vars
+      run: |
+        cluster_access_key=$(cat eks-terraform/creds.json | jq '.AccessKey.AccessKeyId' |tr -d "\"")
+        cluster_secret_key=$(cat eks-terraform/creds.json | jq '.AccessKey.SecretAccessKey' |tr -d "\"")
+        echo "AWS_ACCESS_KEY_ID=$cluster_access_key" >> $GITHUB_ENV
+        echo "AWS_ACCESS_SECRET_KEY=$cluster_secret_key" >> $GITHUB_ENV
     - name: Setup terraform
       uses: hashicorp/setup-terraform@v3
       with:
