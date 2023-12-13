@@ -9,7 +9,6 @@ output "account_id" {
 }
 output "intructions" {
   value = <<EOT
-   Rotate the credentials for the user ${var.name} in AWS IAM
-   And configure yourself access to the cluster via these credentials
+   Grab the config from the folder in the s3 bucket
  EOT
 }
