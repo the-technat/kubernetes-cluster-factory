@@ -74,7 +74,7 @@ jobs:
         END
     - name: Save Terraform configuration to s3 bucket
       run: |
-        aws s3 cp eks-terraform/ s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }}
+        aws s3 cp eks-terraform/ s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} --recursive
     - name: Create IAM user for terraform
       id: aws_user
       run: |
@@ -92,7 +92,7 @@ jobs:
       AWS_REGION: "${{ github.event.inputs.region }}"
     steps:
     - name: Grab Terraform configuration from s3 bucket
-      run: aws s3 cp s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} eks-terraform
+      run: aws s3 cp s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} eks-terraform --recursive
     - name: Setup terraform
       uses: hashicorp/setup-terraform@v3
       with:
