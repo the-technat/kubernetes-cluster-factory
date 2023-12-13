@@ -90,6 +90,8 @@ jobs:
       AWS_ACCESS_KEY_ID: "${{ needs.prepare.aws_user.outputs.cluster_access_key }}"
       AWS_SECRET_ACCESS_KEY: "${{ needs.prepare.aws_user.outputs.cluster_secret_key }}"
       AWS_REGION: "${{ github.event.inputs.region }}"
+      STATE_BUCKET: "grapes-state"
+      STATE_BUCKET_REGION: "eu-west-1"
     steps:
     - name: Grab Terraform configuration from s3 bucket
       run: aws s3 cp s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} eks-terraform --recursive
