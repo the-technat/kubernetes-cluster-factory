@@ -25,7 +25,7 @@ module "eks" {
   cluster_endpoint_public_access = true
 
   # IAM
-  kms_key_owners = [data.aws_caller_identity.current.arn,"arn:aws:iam::${data.aws_caller_identity.current.account_id}:root", "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/nuker"] # required for automatic nuking
+  kms_key_owners = [data.aws_caller_identity.current.arn,"arn:aws:sts::${data.aws_caller_identity.current.account_id}:assumed-role/grapes/grapes","arn:aws:iam::${data.aws_caller_identity.current.account_id}:root", "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/nuker"] # required for automatic nuking
   manage_aws_auth_configmap =  true
   aws_auth_users = [
     {
