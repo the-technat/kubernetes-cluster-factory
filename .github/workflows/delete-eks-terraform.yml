@@ -7,13 +7,24 @@ on:
         type: string
         default: ""
         description: Name of the cluster
+      region:
+        type: choice
+        description: AWS Region to deploy 
+        default: "eu-central-2"
+        options:
+          - "eu-central-1"
+          - "eu-west-1"
+          - "eu-west-2"
+          - "eu-west-3"
+          - "eu-north-1"
+          - "sa-east-1"
 
 env:
   STATE_BUCKET: "grapes-state"
-  AWS_REGION: "eu-west-1" # only bucket, terraform can run elsewhere
+  STATE_BUCKET_REGION: "eu-west-1" 
 
 jobs:
-  repreapre:
+  destroy:
     needs: destroy
     runs-on: ubuntu-latest
     permissions: 
@@ -25,30 +36,14 @@ jobs:
       with:
         role-to-assume: arn:aws:iam::296119450228:role/grapes
         role-session-name: grapes
-        aws-region: ${{ env.AWS_REGION }} 
+        aws-region: ${{ github.event.inputs.region }} 
     - name: Grab Terraform files from bucket
-      run: aws s3 sync s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} eks-terraform
+      run: aws --region ${{ env.STATE_BUCKET_REGION }} s3 sync s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} eks-terraform
     - name: Save Terraform configuration to next job
       uses: actions/upload-artifact@v3
       with:
         name: state-${{ github.event.inputs.name }}
         path: eks-terraform   
-  destroy: 
-    runs-on: ubuntu-latest
-    needs: reprepare
-    steps:
-    - name: Grab Terraform configuration from previous job
-      uses: actions/download-artifact@v3
-      with:
-        name: state-${{ github.event.inputs.name }}
-        path: eks-terraform
-    - name: Configure aws env vars
-      run: |
-        mkdir -p $HOME/.aws/
-        tee $HOME/.aws/credentials << END
-          aws_access_key_id = $(cat eks-terraform/creds.json | jq '.AccessKey.AccessKeyId' |tr -d "\"")
-          aws_secret_access_key = $(cat eks-terraform/creds.json | jq '.AccessKey.SecretAccessKey' |tr -d "\"")
-        END
     - name: Setup terraform
       uses: hashicorp/setup-terraform@v3
       with:
@@ -59,24 +54,11 @@ jobs:
       run: terraform -chdir=eks-terraform init -backend-config=s3.tfbackend
     - name: Terraform Destroy
       run: terraform -chdir=eks-terraform destroy -auto-approve -input=false -var-file vars.tfvars
-  cleanup:
-    needs: destroy
-    runs-on: ubuntu-latest
-    permissions: 
-      id-token: write
-      contents: read
-    steps:
-    - name: configure aws credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: arn:aws:iam::296119450228:role/grapes
-        role-session-name: grapes
-        aws-region: ${{ env.AWS_REGION }} 
     - name: Delete cluster user
       if: always()
       run: aws iam delete-user --user-name ${{ github.event.inputs.name }}
     - name: Delete state + config
       if: always()
       run: | 
-        aws s3 rm s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} --recursive
-        aws s3 rm s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }}-state
+        aws --region ${{ env.STATE_BUCKET_REGION }} s3 rm s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} --recursive
+        aws --region ${{ env.STATE_BUCKET_REGION }} s3 rm s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }}-state

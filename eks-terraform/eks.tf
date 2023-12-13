@@ -24,6 +24,16 @@ module "eks" {
   cluster_service_ipv4_cidr      = "10.127.0.0/16"
   cluster_endpoint_public_access = true
 
+  # IAM
+  manage_aws_auth_configmap =  true
+  aws_auth_users = [
+    {
+      userarn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/${var.name}"
+      username = var.name
+      groups = ["system:masters"]
+    },
+  ]
+
   // settings in this block apply to all nodes groups
   eks_managed_node_group_defaults = {
     # Compute
@@ -61,5 +71,4 @@ module "eks" {
   }
 
   tags = local.tags
-
 }
