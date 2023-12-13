@@ -38,18 +38,13 @@ This method installs k3s on Hcloud using a cool shell script, which you can find
 This method uses the official [terraform-aws-eks](https://github.com/terraform-aws-modules/terraform-aws-eks) module to deploy an EKS cluster using a minimal config.
 
 This method has some sane defaults for cluster installation:
-- KMS encryption is explicitly disabled(due to problematic ownership + not needed for lab purposes)
 - everything is fully HA (except the NAT gateways)
 - we use `x86_64` nodes (could easily be changed to `amd64`)
 - AWS SSM is enabled for the nodes
 
 #### Workflow
 Once the workflow is finished you can do the following:
-- Login to your AWS account
-- Find the IAM User named like the cluster
-- Regenerate the access key for this user
-- Use this user/credentials for the rest of your lab session
-- The terraform code used to deploy the cluster including the backend configuration can be found in the state bucket
+- Download the artifact, it contains all you need
 
 To delete a cluster it's simple:
 - remove all your local files (not the ones on s3!)
@@ -66,11 +61,4 @@ And some prerequisites are also required:
 
 - Hetzner-k3s: cilium installation doesn't quite work as expected (kube-proxy replacement can't be controlled)
 
-## Ideas
 
-- Move [banana-bread](https://github.com/alleaffengaffen/banana-bread) in here as method
-- Add method using kops
-- Add method using Terraform/Kubespray combo
-- Add some generic apps that are deployed to clusters of all methods using GitOps
-- Migrate the install methods to cluster-api providers that will bootstrap new clusters
-- Find a way to automatically run deletion workflows

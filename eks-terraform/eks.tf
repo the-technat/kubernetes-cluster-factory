@@ -24,9 +24,6 @@ module "eks" {
   cluster_service_ipv4_cidr      = "10.127.0.0/16"
   cluster_endpoint_public_access = true
 
-  # KMS
-  create_kms_key = false
-
   // settings in this block apply to all nodes groups
   eks_managed_node_group_defaults = {
     # Compute
