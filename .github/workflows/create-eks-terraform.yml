@@ -14,7 +14,6 @@ on:
         default: "eu-central-2"
         options:
           - "eu-central-1"
-          - "eu-central-2"
           - "eu-west-1"
           - "eu-west-2"
           - "eu-west-3"
@@ -77,6 +76,7 @@ jobs:
       run: |
         aws s3 cp eks-terraform/ s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }}
     - name: Create IAM user for terraform
+      id: aws_user
       run: |
         aws iam create-user --user-name ${{ github.event.inputs.name }}
         aws iam attach-user-policy --policy-arn "arn:aws:iam::aws:policy/AdministratorAccess" --user-name ${{ github.event.inputs.name }}
@@ -87,8 +87,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: prepare
     env:
-      AWS_ACCESS_KEY_ID: "${{ env.cluster_access_key }}"
-      AWS_SECRET_ACCESS_KEY: "${{ env.cluster_secret_key }}"
+      AWS_ACCESS_KEY_ID: "${{ needs.prepare.aws_user.outputs.cluster_access_key }}"
+      AWS_SECRET_ACCESS_KEY: "${{ needs.prepare.aws_user.outputs.cluster_secret_key }}"
       AWS_REGION: "${{ github.event.inputs.region }}"
     steps:
     - name: Grab Terraform configuration from s3 bucket

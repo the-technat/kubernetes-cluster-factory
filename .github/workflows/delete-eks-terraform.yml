@@ -35,8 +35,8 @@ jobs:
     needs: reprepare
     runs-on: ubuntu-latest
     env:
-      AWS_ACCESS_KEY_ID: "${{ env.cluster_access_key }}"
-      AWS_SECRET_ACCESS_KEY: "${{ env.cluster_secret_key }}"
+      AWS_ACCESS_KEY_ID: "${{ needs.prepare.aws_user.outputs.cluster_access_key }}"
+      AWS_SECRET_ACCESS_KEY: "${{ needs.prepare.aws_user.outputs.cluster_secret_key }}"
       AWS_REGION: "${{ github.event.inputs.region }}"
     steps:
     - name: Grab Terraform files from bucket
