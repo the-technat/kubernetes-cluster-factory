@@ -25,7 +25,6 @@ env:
 
 jobs:
   destroy:
-    needs: destroy
     runs-on: ubuntu-latest
     permissions: 
       id-token: write
