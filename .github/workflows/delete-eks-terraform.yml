@@ -55,7 +55,9 @@ jobs:
       run: terraform -chdir=eks-terraform destroy -auto-approve -input=false -var-file vars.tfvars
     - name: Delete cluster user
       if: always()
-      run: aws iam delete-user --user-name ${{ github.event.inputs.name }}
+      run: |
+        aws iam detach-user-policy --user-name ${{ github.event.inputs.name }} --policy-arn "arn:aws:iam::aws:policy/AdministratorAccess"
+        aws iam delete-user --user-name ${{ github.event.inputs.name }}
     - name: Delete state + config
       if: always()
       run: | 
