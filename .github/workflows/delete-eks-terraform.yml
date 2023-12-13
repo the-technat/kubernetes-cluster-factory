@@ -14,6 +14,9 @@ jobs:
     permissions: 
       id-token: write
       contents: read
+    outputs:
+      output1: ${{ steps.aws_user.outputs.cluster_access_key }}
+      output2: ${{ steps.aws_user.outputs.cluster_secret_key }}
     steps:
     - uses: actions/checkout@v4
     - name: configure aws credentials
@@ -23,17 +26,20 @@ jobs:
         role-session-name: grapes
         aws-region: eu-central-1 # doesn't matter for IAM
     - name: Rotate credentials for cluster user
+      id: aws_user
       run: |
         aws iam create-access-key --user-name ${{ github.event.inputs.name }} --output=json > output.json
-        echo 'cluster_access_key=$(cat output.json | jq '.AccessKey.AccessKeyId' |tr -d "\"")' >> $GITHUB_OUTPUT
-        echo 'cluster_secret_key=$(cat output.json | jq '.AccessKey.SecretAccessKey' |tr -d "\"")' >> $GITHUB_OUTPUT
-   
+        cluster_access_key=$(cat output.json | jq '.AccessKey.AccessKeyId' |tr -d "\"")
+        cluster_secret_key=$(cat output.json | jq '.AccessKey.SecretAccessKey' |tr -d "\"")
+        echo "cluster_access_key=$cluster_access_key" >> $GITHUB_OUTPUT
+        echo "cluster_secret_key=$cluster_secret_key" >> $GITHUB_OUTPUT
+        rm output.json
   destroy: 
     needs: reprepare
     runs-on: ubuntu-latest
     env:
-      AWS_ACCESS_KEY_ID: "${{ needs.prepare.aws_user.outputs.cluster_access_key }}"
-      AWS_SECRET_ACCESS_KEY: "${{ needs.prepare.aws_user.outputs.cluster_secret_key }}"
+      AWS_ACCESS_KEY_ID: "${{ needs.reprepare.aws_user.outputs.cluster_access_key }}"
+      AWS_SECRET_ACCESS_KEY: "${{ needs.reprepare.aws_user.outputs.cluster_secret_key }}"
       AWS_REGION: "${{ github.event.inputs.region }}"
       STATE_BUCKET: "grapes-state"
       STATE_BUCKET_REGION: "eu-west-1"
