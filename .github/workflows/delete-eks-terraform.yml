@@ -39,7 +39,7 @@ jobs:
     - name: Grab Terraform files from bucket
       run: aws --region ${{ env.STATE_BUCKET_REGION }} s3 sync s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} eks-terraform
     - name: Save Terraform configuration to next job
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: state-${{ github.event.inputs.name }}
         path: eks-terraform   
