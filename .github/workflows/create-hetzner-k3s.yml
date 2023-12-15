@@ -118,7 +118,7 @@ jobs:
         KUBECONFIG: output/kubeconfig
       run: helm upgrade -i cilium -n kube-system cilium/cilium -f output/cilium-values.yaml
     - name: Upload outputs
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: outputs-${{ github.event.inputs.name }}
         path: output/
