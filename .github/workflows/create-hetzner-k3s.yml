@@ -53,6 +53,10 @@ on:
         - "1.27"
         - "1.28"
         description: Version of k3s to deploy
+      
+env:
+  STATE_BUCKET: "grapesstate"
+  STATE_BUCKET_REGION: "eu-west-1" 
 
 jobs:
   deploy:
@@ -68,6 +72,12 @@ jobs:
       with:
         access-id: ${{ secrets.AKEYLESS_ACCESS_ID}}
         static-secrets: '{"/actions/grapes/hcloud_token":"HCLOUD_TOKEN"}'
+    - name: configure aws credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::351425708426:role/grapes
+        role-session-name: grapes
+        aws-region: ${{ env.STATE_BUCKET_REGION }}
     - name: Create output directory
       run: mkdir output
     - name: Setup hetzner-k3s cli
@@ -117,8 +127,5 @@ jobs:
       env:
         KUBECONFIG: output/kubeconfig
       run: helm upgrade -i cilium -n kube-system cilium/cilium -f output/cilium-values.yaml
-    - name: Upload outputs
-      uses: actions/upload-artifact@v4
-      with:
-        name: outputs-${{ github.event.inputs.name }}
-        path: output/
+    - name: Upload outputs to s3
+      run: aws s3 cp output s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }}-outputs --recursive

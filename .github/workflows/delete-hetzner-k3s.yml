@@ -7,6 +7,10 @@ on:
         type: string
         default: ""
         description: Name of the cluster
+    
+env:
+  STATE_BUCKET: "grapesstate"
+  STATE_BUCKET_REGION: "eu-west-1" 
 
 jobs:
   destroy:
@@ -16,6 +20,11 @@ jobs:
       contents: read
     steps:
     - uses: actions/checkout@v4
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::351425708426:role/grapes
+        role-session-name: grapes
+        aws-region: ${{ env.STATE_BUCKET_REGION }}
     - name: Fetch secrets from AKeyless
       id: fetch-secrets
       uses: LanceMcCarthy/akeyless-action@v3
@@ -28,14 +37,7 @@ jobs:
         sudo install -m 555 /tmp/hetzner-k3s-linux-amd64 /usr/local/bin/hetzner-k3s
         hetzner-k3s --version
     - name: Download outputs
-      id: download-artifact
-      uses: dawidd6/action-download-artifact@v3
-      with:
-        github_token: ${{secrets.GITHUB_TOKEN}}
-        workflow: create-hetzner-k3s.yml
-        branch: main
-        name: outputs-${{ github.event.inputs.name }}
-        path: output
-        search_artifacts: true
+      run: |
+        aws s3 mv s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }}-outputs output --recursive
     - name: Delete cluster
       run: hetzner-k3s delete --config output/cluster-config.yaml

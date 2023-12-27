@@ -40,6 +40,8 @@ To get started all that was needed is:
 - a Hetzner Project
 - an Account API Token 
 
+Some outputs to access the cluster are stored on S3, so grab them after the cluster has been created.
+
 ### EKS-terraform
 
 This method uses the official [terraform-aws-eks](https://github.com/terraform-aws-modules/terraform-aws-eks) module to deploy an EKS cluster.
@@ -49,11 +51,15 @@ This method has some highlights:
 - we use `x86_64` nodes (could easily be changed to `amd64`)
 - AWS SSM is enabled for the nodes
 
-And some prerequisites are also required:
-- an AWS account
+### State
+
+All methos are allowed to save state on S3. 
+
+The following infrastructure was setup for that:
 - an OIDC provider for Github Actions
 - an IAM role with a trust-policy so that this repository can assume it
-- a S3 bucket for state
+- an IAM policy for the role
+- an S3 bucket for state
 - [account-nuker](https://github.com/the-technat/account-nuker) that regurarly nukes left-over resources
 
 
