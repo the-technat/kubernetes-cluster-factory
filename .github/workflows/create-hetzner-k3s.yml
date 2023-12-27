@@ -44,14 +44,13 @@ on:
         description: Location to deploy the cluster
       k3s_version:
         type: choice
-        default: "1.28"
+        default: "1.29"
         options:
-        - "1.24"
-        - "1.25"
         - "1.25"
         - "1.26"
         - "1.27"
         - "1.28"
+        - "1.29"
         description: Version of k3s to deploy
       
 env:
