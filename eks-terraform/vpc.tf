@@ -1,7 +1,7 @@
 # https://github.com/terraform-aws-modules/terraform-aws-eks/blob/master/examples/complete/main.tf#L411-L435
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "5.5.0"
+  version = "5.5.1"
 
   name = var.name
   cidr = local.cidr
