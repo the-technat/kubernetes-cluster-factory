@@ -5,7 +5,7 @@ resource "helm_release" "contour" {
   name             = "contour"
   repository       = "https://charts.bitnami.com/bitnami"
   chart            = "contour"
-  version          = "12.6.4"
+  version          = "15.1.1"
   namespace        = "contour"
   create_namespace = true
 
