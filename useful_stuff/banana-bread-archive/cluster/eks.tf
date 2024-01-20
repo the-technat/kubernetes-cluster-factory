@@ -227,7 +227,7 @@ data "aws_ami" "eks_default_arm" {
 
 module "cloudwatch_kms_key" {
   source  = "terraform-aws-modules/kms/aws"
-  version = "~> 1.5"
+  version = "~> 2.0"
 
   description             = "Customer managed key to encrypt EKS Cloudwatch Logs"
   deletion_window_in_days = 7
@@ -274,7 +274,7 @@ module "cloudwatch_kms_key" {
 
 module "ebs_kms_key" {
   source  = "terraform-aws-modules/kms/aws"
-  version = "~> 1.5"
+  version = "~> 2.0"
 
   description             = "Customer managed key to encrypt EKS managed node group volumes"
   deletion_window_in_days = 7
