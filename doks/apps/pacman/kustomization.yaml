@@ -1,0 +1,13 @@
+namespace: pacman
+resources:
+- ./namespace.yaml
+- ./mongo-pvc.yaml
+- ./mongo-service.yaml
+- ./mongo-deployment.yaml
+- ./pacman-service.yaml
+- ./pacman-deployment.yaml
+- ./ingress.yaml
+
+patches:
+  - ./patch-pacman-service.yaml
+  - ./patch-mongo-service.yaml

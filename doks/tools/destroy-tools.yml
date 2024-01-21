@@ -1,0 +1,62 @@
+---
+- name: Uninstall infrastructure tools
+  hosts: localhost
+  vars:
+    cluster_name: 'alleaffengaffen'
+    kubeconfig_path: '/tmp/kubeconfig' # location to write kubeconfig to (dir needs to exist)
+  tasks:
+  - name: Update kubeconfig for cluster
+    community.digitalocean.digital_ocean_kubernetes_info:
+      oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
+      name: "{{ cluster_name }}"
+      return_kubeconfig: yes
+    register: doks
+  - name: Write kubeconfig to file
+    copy:
+      content: "{{ doks.data.kubeconfig }}"
+      dest: "{{ kubeconfig_path }}"
+      mode: 0600
+  - name: Uninstall argocd helm chart
+    kubernetes.core.helm:
+      kubeconfig_path: "{{ kubeconfig_path }}"
+      wait: yes
+      state: absent
+      release_name: argocd
+      release_namespace: argocd
+  - name: Uninstall prometheus-adapter helm chart
+    kubernetes.core.helm:
+      kubeconfig_path: "{{ kubeconfig_path }}"
+      state: absent
+      wait: yes
+      release_name: prometheus-adapter
+      release_namespace: monitoring
+  - name: Uninstall kube-prometheus-stack helm chart
+    kubernetes.core.helm:
+      kubeconfig_path: "{{ kubeconfig_path }}"
+      state: absent
+      wait: yes
+      release_name: kube-prometheus-stack
+      release_namespace: monitoring
+  - name: Uninstall ingress-nginx helm chart
+    kubernetes.core.helm:
+      kubeconfig_path: "{{ kubeconfig_path }}"
+      state: absent
+      wait: yes
+      release_name: ingress-nginx
+      release_namespace: ingress-nginx
+  - name: Uninstall cert-manager helm chart
+    kubernetes.core.helm:
+      kubeconfig_path: "{{ kubeconfig_path }}"
+      state: absent
+      wait: yes
+      release_name: cert-manager
+      release_namespace: cert-manager
+  - name: Uninstall external-dns helm chart
+    kubernetes.core.helm:
+      kubeconfig_path: "{{ kubeconfig_path }}"
+      state: absent
+      wait: yes
+      release_name: external-dns
+      release_namespace: external-dns
+  - name: Delete all PVs
+    shell: "kubectl delete pv --all -A --kubeconfig {{ kubeconfig_path }}"

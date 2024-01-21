@@ -1,0 +1,46 @@
+resources:
+- ./ingress.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/00-sock-shop-ns.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/01-carts-dep.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/02-carts-svc.yml
+- ./microservices-demo/deploy/kubernetes/manifests/03-carts-db-dep.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/04-carts-db-svc.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/05-catalogue-dep.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/06-catalogue-svc.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/07-catalogue-db-dep.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/08-catalogue-db-svc.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/09-front-end-dep.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/10-front-end-svc.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/11-orders-dep.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/12-orders-svc.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/13-orders-db-dep.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/14-orders-db-svc.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/15-payment-dep.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/16-payment-svc.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/17-queue-master-dep.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/18-queue-master-svc.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/19-rabbitmq-dep.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/20-rabbitmq-svc.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/21-session-db-dep.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/22-session-db-svc.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/23-shipping-dep.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/24-shipping-svc.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/25-user-dep.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/26-user-svc.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/27-user-db-dep.yaml
+- ./microservices-demo/deploy/kubernetes/manifests/28-user-db-svc.yaml
+- ./microservices-demo/deploy/kubernetes/autoscaling/cart-hsc.yaml
+- ./microservices-demo/deploy/kubernetes/autoscaling/catalogue-hsc.yaml
+- ./microservices-demo/deploy/kubernetes/autoscaling/front-end-hsc.yaml
+- ./microservices-demo/deploy/kubernetes/autoscaling/orders-hsc.yaml
+- ./microservices-demo/deploy/kubernetes/autoscaling/payment-hsc.yaml
+- ./microservices-demo/deploy/kubernetes/autoscaling/queue-master-hsc.yaml
+- ./microservices-demo/deploy/kubernetes/autoscaling/shipping-hsc.yaml
+- ./microservices-demo/deploy/kubernetes/autoscaling/user-hsc.yaml
+- ./microservices-demo/deploy/kubernetes/manifests-loadtest/loadtest-dep.yaml
+
+patches:
+- ./patch-10-front-end-svc.yaml
+- ./patch-cart-hsc.yaml
+- ./patch-loadtest-dep.yaml
+- ./patch-front-end-deploy.yaml

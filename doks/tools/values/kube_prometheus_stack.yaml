@@ -1,0 +1,157 @@
+defaultRules:
+  rules:
+    etcd: false
+    kubelet: false
+    kubeScheduler: false
+
+alertmanager:
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+    maxUnavailable: ""
+
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: "{{ cluster_issuer }}"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    hosts:
+      - "{{ alertmanager_fqdn }}"
+    paths:
+    - /
+    pathType: Prefix
+    tls:
+    - secretName: alertmanager-general-tls
+      hosts:
+        - "{{ alertmanager_fqdn }}"
+
+  alertmanagerSpec:
+    replicas: 2
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: "{{ alertmanager_storage_class }}"
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: "{{ alertmanager_storage }}"
+
+
+    externalUrl: "https://{{ alertmanager_fqdn }}"
+
+    resources:
+      requests:
+        memory: 400Mi
+        cpu: 200m
+      limits:
+        memory: 2Gi
+        cpu: 2
+
+    podAntiAffinity: "soft"
+    podAntiAffinityTopologyKey: kubernetes.io/hostname
+
+    topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app: alertmanager
+
+## Using default values from https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
+grafana:
+  replicas: 1
+  # podDisruptionBudget:
+    # minAvailable: 1
+  serviceMonitor:
+    enabled: true
+  resources:
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  defaultDashboardsTimezone: Europe/Zurich
+  adminPassword: "{{ grafana_admin_password }}"
+  ingress:
+    enabled: true
+    annotations:
+      cert-manager.io/cluster-issuer: "{{ cluster_issuer }}"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      kubernetes.io/ingress.class: nginx
+    hosts:
+      - "{{ grafana_fqdn }}"
+    path: /
+    tls:
+    - secretName: grafana-general-tls
+      hosts:
+      - "{{ grafana_fqdn }}"
+
+kubelet:
+  enabled: true
+kubeControllerManager:
+  enabled: false
+kubeEtcd:
+  enabled: false # We don't have access to etcd
+kubeScheduler:
+  enabled: false # No access
+kubeProxy:
+  enabled: true
+kubeStateMetrics:
+  enabled: true
+
+prometheus:
+  enabled: true
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+    maxUnavailable: ""
+
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: "{{ cluster_issuer }}"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    hosts:
+      - "{{ prometheus_fqdn }}"
+    paths:
+    - /
+    pathType: Prefix
+    tls:
+      - secretName: prometheus-general-tls
+        hosts:
+          - "{{ prometheus_fqdn }}"
+
+  prometheusSpec:
+    topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app: prometheus
+
+    externalUrl: "https://{{ prometheus_fqdn }}"
+    podAntiAffinity: "soft"
+    podAntiAffinityTopologyKey: kubernetes.io/hostname
+
+    resources:
+      requests:
+        memory: 400Mi
+        cpu: 200m
+      limits:
+        memory: 2Gi
+        cpu: 2
+
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: "{{ prometheus_storage_class }}"
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: "{{ prometheus_storage }}"

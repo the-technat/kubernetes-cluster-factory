@@ -1,0 +1,125 @@
+---
+- name: Infrastructure Tools
+  hosts: localhost
+  vars:
+    kubeconfig_path: '/tmp/kubeconfig' # location to write kubeconfig to (dir needs to exist)
+    domainFilters:
+      - "alleaffengaffen.ch" # Domains external-dns shall manage
+    txtOwnerId: 'alleaffengaffen' # Owner to note in TXT records
+    cluster_name: 'alleaffengaffen'
+    letsencrypt_mail: 'banane@alleaffengaffen.ch' # mail for cluster-issuers
+    argocd_fqdn: 'argocd.alleaffengaffen.ch'
+    argocd_onboarding_repo: 'https://code.immerda.ch/technat/digitalocean_doks_demo.git'
+    argocd_onboarding_repo_path: 'apps'
+    cluster_issuer: 'letsencrypt-production'
+    alertmanager_fqdn: 'alertmanager.alleaffengaffen.ch'
+    alertmanager_storage: '10Gi'
+    alertmanager_storage_class: 'do-block-storage'
+    grafana_fqdn: 'grafana.alleaffengaffen.ch'
+    prometheus_fqdn: 'prometheus.alleaffengaffen.ch'
+    prometheus_storage: '50Gi'
+    prometheus_storage_class: 'do-block-storage'
+    # dhParam: '' # openssl dhparam 4096 2> /dev/null | base64
+    # do_api_token: '' # override with ansible_vault file
+    # grafana_admin_password: ''
+    # Argo expects the password in the secret to be bcrypt hashed. You can create this hash with
+    # `htpasswd -nbBC 10 "" $ARGO_PWD | tr -d ':\n' | sed 's/$2y/$2a/'`
+    # argocd_admin_password_bcrypt: ''
+  tasks:
+  - name: Update kubeconfig for cluster
+    community.digitalocean.digital_ocean_kubernetes_info:
+      oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
+      name: "{{ cluster_name }}"
+      return_kubeconfig: yes
+    register: doks
+  - name: Write kubeconfig to file
+    copy:
+      content: "{{ doks.data.kubeconfig }}"
+      dest: "{{ kubeconfig_path }}"
+      mode: 0600
+  - name: Deploy external-dns helm chart
+    kubernetes.core.helm:
+      kubeconfig_path: "{{ kubeconfig_path }}"
+      chart_repo_url: "https://kubernetes-sigs.github.io/external-dns/"
+      chart_ref: external-dns
+      chart_version: 1.7.1
+      wait: yes
+      release_name: external-dns
+      release_namespace: external-dns
+      create_namespace: yes
+      release_values: "{{ lookup('template', 'values/external-dns.yaml') | from_yaml }}"
+  - name: Deploy cert-manager helm chart
+    kubernetes.core.helm:
+      kubeconfig_path: "{{ kubeconfig_path }}"
+      chart_repo_url: "https://charts.jetstack.io"
+      chart_ref: cert-manager
+      chart_version: v1.7.1
+      wait: yes
+      release_name: cert-manager
+      release_namespace: cert-manager
+      create_namespace: yes
+      release_values: "{{ lookup('template', 'values/cert-manager.yaml') | from_yaml }}"
+  - name: Create letsencrypt staging cluster issuer
+    kubernetes.core.k8s:
+      kubeconfig: "{{ kubeconfig_path }}"
+      apply: yes
+      template: "files/letsencrypt-staging.yaml"
+  - name: Create letsencrypt production cluster issuer
+    kubernetes.core.k8s:
+      kubeconfig: "{{ kubeconfig_path }}"
+      apply: yes
+      template: "files/letsencrypt-production.yaml"
+  - name: Deploy ingress-nginx helm chart
+    kubernetes.core.helm:
+      kubeconfig_path: "{{ kubeconfig_path }}"
+      chart_repo_url: "https://kubernetes.github.io/ingress-nginx/"
+      chart_ref: ingress-nginx
+      chart_version: 4.0.17
+      # wait: yes
+      release_name: ingress-nginx
+      release_namespace: ingress-nginx
+      create_namespace: yes
+      release_values: "{{ lookup('template', 'values/ingress-nginx.yaml') | from_yaml }}"
+  - name: Deploy kube-prometheus-stack helm chart
+    kubernetes.core.helm:
+      kubeconfig_path: "{{ kubeconfig_path }}"
+      chart_repo_url: "https://prometheus-community.github.io/helm-charts"
+      chart_ref: kube-prometheus-stack
+      chart_version: 32.2.1
+      wait: yes
+      release_name: kube-prometheus-stack
+      release_namespace: monitoring
+      create_namespace: yes
+      release_values: "{{ lookup('template', 'values/kube_prometheus_stack.yaml') | from_yaml }}"
+  - name: Deploy prometheus-adapter helm chart
+    kubernetes.core.helm:
+      kubeconfig_path: "{{ kubeconfig_path }}"
+      chart_repo_url: "https://prometheus-community.github.io/helm-charts/"
+      chart_ref: prometheus-adapter
+      chart_version: 3.0.2
+      wait: yes
+      release_name: prometheus-adapter
+      release_namespace: monitoring
+      release_values: "{{ lookup('template', 'values/prometheus_adapter.yaml') | from_yaml }}"
+  - name: Deploy argocd helm chart
+    kubernetes.core.helm:
+      kubeconfig_path: "{{ kubeconfig_path }}"
+      chart_repo_url: "https://argoproj.github.io/argo-helm/"
+      chart_ref: argo-cd
+      chart_version: 3.33.5
+      wait: yes
+      wait_timeout: 10m
+      release_name: argocd
+      release_namespace: argocd
+      create_namespace: yes
+      release_values: "{{ lookup('template', 'values/argocd.yaml') | from_yaml }}"
+  post_tasks:
+    - name: We are ready
+      debug:
+        msg:
+          - "Your Kubernetes Cluster is provisioned and the management tools are installed:"
+          - "ArgoCD UI: https://{{ argocd_fqdn }}"
+          - "Grafana UI: https://{{ grafana_fqdn }}"
+          - "Prometheus UI: https://{{ prometheus_fqdn }}"
+          - "Alertmanager UI: https://{{ alertmanager_fqdn }}"
+          - "Put your ArgoCD app specs into {{ argocd_onboarding_repo }} under /{{ argocd_onboarding_repo_path }}"

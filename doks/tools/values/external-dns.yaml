@@ -1,0 +1,35 @@
+logLevel: info
+logFormat: text
+
+interval: 1m
+triggerLoopOnEvent: true
+
+sources:
+  - service
+  - ingress
+
+policy: sync
+
+registry: txt
+txtOwnerId: "{{ txtOwnerId }}"
+# txtPrefix: ""
+# txtSuffix: ""
+
+domainFilters:
+  {% for domain in domainFilters %}
+  - "{{ domain }}"
+  {% endfor %}
+
+provider: hetzner
+
+env:
+  - name: HETZNER_TOKEN
+    value: "{{ hetzner_dns_token }}"
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 100Mi
+  requests:
+    cpu: 10m
+    memory: 50Mi

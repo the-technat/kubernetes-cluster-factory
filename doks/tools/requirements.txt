@@ -1,0 +1,5 @@
+# List all requirements based on a fresh ansible venv (also ansible!)
+ansible
+openshift
+pyyaml
+jsonpatch

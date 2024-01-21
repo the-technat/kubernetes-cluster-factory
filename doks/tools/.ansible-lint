@@ -1,0 +1,8 @@
+skip_list:
+  - '403'
+  - meta-no-info
+  - yaml
+  - command-instead-of-shell
+  - no-changed-when
+  - experimental
+  - fqcn-builtins  

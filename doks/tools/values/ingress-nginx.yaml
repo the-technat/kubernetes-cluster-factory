@@ -1,0 +1,49 @@
+controller:
+  extraArgs:
+    enable-ssl-passthrough: true
+
+  kind: Deployment
+
+  updateStrategy: 
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+
+  minReadySeconds: 5
+
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/instance: ingress-nginx-internal
+
+  terminationGracePeriodSeconds: 600
+
+  replicaCount: 3
+  minAvailable: 1
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 90Mi
+
+defaultBackend:
+  enabled: true
+  replicaCount: 2
+
+  resources: 
+    limits:
+      cpu: 10m
+      memory: 20Mi
+    requests:
+      cpu: 10m
+      memory: 20Mi
+
+# A base64ed Diffie-Hellman parameter
+# This can be generated with: openssl dhparam 4096 2> /dev/null | base64
+dhParam: "{{ dhParam }}"

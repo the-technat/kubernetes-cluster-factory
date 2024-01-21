@@ -1,0 +1,173 @@
+controller:
+  ## HA
+  replicas: 3
+  enableStatefulSet: true
+  env:
+    - name: "ARGOCD_CONTROLLER_REPLICAS"
+      value: "3"
+
+  args:
+    appResyncPeriod: "30"
+
+  topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+  pdb:
+    enabled: true
+    minAvailable: 1
+    maxUnavailable: 0
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# Disable the dex provider
+dex:
+  enabled: false
+# Disable single replica redis
+redis:
+  enabled: false
+
+redis-ha:
+  enabled: true
+  podDisruptionBudget:
+    minAvailable: 1
+  haProxy:
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+  redis:
+    resources:
+      requests:
+        memory: 200Mi
+        cpu: 100m
+      limits:
+        memory: 700Mi
+  exporter:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+server:
+  ## HA config
+  replicas: 3
+  env: 
+    - name: ARGOCD_API_SERVER_REPLICAS
+      value: '3'
+
+  # extraArgs:
+  # - --insecure
+
+  topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  ingress:
+    enabled: true
+    annotations:
+      cert-manager.io/cluster-issuer: "{{ cluster_issuer }}"
+      kubernetes.io/tls-acme: "true"
+      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    ingressClassName: "nginx"
+    hosts:
+      - "{{ argocd_fqdn }}"
+    pathType: Prefix
+    paths:
+      - /
+    tls:
+      - secretName: argocd-secret
+        hosts:
+          - "{{ argocd_fqdn }}"
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+  config:
+    url: "https://{{ argocd_fqdn }}"
+
+  additionalApplications:
+  - name: "{{ cluster_name }}"
+    namespace: argocd
+    finalizers:
+    - resources-finalizer.argocd.argoproj.io
+    project: default
+    source:
+      repoURL: "{{ argocd_onboarding_repo }}"
+      targetRevision: HEAD
+      path: "{{ argocd_onboarding_repo_path }}"
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: argocd
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+
+repoServer:
+  replicas: 3
+
+  topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+
+  resources:
+    limits:
+      cpu: 50m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 64Mi
+
+  pdb:
+    enabled: true
+    minAvailable: 1
+    maxUnavailable: 0
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+configs:
+  secret:
+    ## Argo expects the password in the secret to be bcrypt hashed. You can create this hash with
+    ## `htpasswd -nbBC 10 "" $ARGO_PWD | tr -d ':\n' | sed 's/$2y/$2a/'`
+    argocdServerAdminPassword: "{{ argocd_admin_password_bcrypt }}"
+  knownHosts:
+    data:
+      ssh_known_hosts: |
+        code-ssh.immerda.ch ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDcD5nThk+tf2+Zdsjs7o42Vzu0lDRxLtarrDhMb16zN
+        code-ssh.immerda.ch ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCtz61Sknb6+0TdRWLrWjOxoxUt3rz7NFZvkDUf69o7t/Srt9TCKIURsP3i8IXlXAgCS0AUidtUDABBqk5VNmNqIe0sYa7hN1Rxo6EiRqYQeMliXybewtHg0HH1Ds8OF11p070866eVdO2trGVfmWITIXaZdU8GqGXIUvvnhLGU/Vu2WmdeU/Al/51Z07s3uqiiLbp2Kr7rEV70LTbJ1G0kK3PgtzLuo51hvOHX5OLG/uTnfUURkCxtHFcNZUSAJooYPm06YpSt8BRfAm8S7x0uegp1tdQFC3xhUw2kxkvvEZ8e1PR6LAEGqoCsW8T7OliIUOAIP64jWjJpH7zWo4nf
+        code-ssh.immerda.ch ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBM745utvX20Qt83yIBPDPrysXhZueQiG8kvByaEJLomRaXP5Ohx+pjl6Iy2Kf5VvvhELd3hGue5dj2EF8PMt36A=
+        bitbucket.org ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAubiN81eDcafrgMeLzaFPsw2kNvEcqTKl/VqLat/MaB33pZy0y3rJZtnqwR2qOOvbwKZYKiEO1O6VqNEBxKvJJelCq0dTXWT5pbO2gDXC6h6QDXCaHo6pOHGPUy+YBaGQRGuSusMEASYiWunYN0vCAI8QaXnWMXNMdFP3jHAJH0eDsoiGnLPBlBp4TNm6rYI74nMzgz3B9IikW4WVK+dc8KZJZWYjAuORU3jc1c/NPskD2ASinf8v3xnfXeukU0sJ5N6m5E8VLjObPEO+mN2t/FZTMZLiFqPWc/ALSqnMnnhwrNi2rbfg/rd/IpL8Le3pSBne8+seeFVBoGqzHM9yXw==
+        github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
+        github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+        github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
+        gitlab.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBFSMqzJeV9rUzU4kWitGjeR4PWSa29SPqJ1fVkhtj3Hw9xjLVXVYrU9QlYWrOLXBpQ6KWjbjTDTdDkoohFzgbEY=
+        gitlab.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAfuCHKVTjquxvt6CM6tdG4SLp1Btn/nOeHHE5UOzRdf
+        gitlab.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCsj2bNKTBSpIYDEGk9KxsGh3mySTRgMtXL583qmBpzeQ+jqCMRgBqB98u3z++J1sKlXHWfM9dyhSevkMwSbhoR8XIq/U0tCNyokEi/ueaBMCvbcTHhO7FcwzY92WK4Yt0aGROY5qX2UKSeOvuP4D6TPqKF1onrSzH9bx9XUf2lEdWT/ia1NEKjunUqu1xOB/StKDHMoX4/OKyIzuS0q/T1zOATthvasJFoPrAjkohTyaDUz2LN5JoH839hViyEG82yB+MjcFV5MU3N1l1QL3cVUCh93xSaua1N85qivl+siMkPGbO5xR/En4iEY6K2XPASUEMaieWVNTRCtJ4S8H+9

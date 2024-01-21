@@ -1,0 +1,63 @@
+installCRDs: true
+
+replicaCount: 2
+
+strategy: 
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 0
+    maxUnavailable: 1
+
+extraArgs: 
+  - --enable-certificate-owner-ref=true
+
+resources: 
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits: 
+    cpu: 500m
+    memory: 512Mi
+
+
+ingressShim: 
+  defaultIssuerName: "letsencrypt-staging"
+  defaultIssuerKind: "ClusterIssuer"
+
+prometheus:
+  enabled: false
+
+webhook:
+  replicaCount: 2
+  strategy: 
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+
+  resources: 
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+cainjector:
+  enabled: true
+  replicaCount: 2
+
+  strategy: 
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+
+  resources: 
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
