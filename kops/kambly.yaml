@@ -1,0 +1,173 @@
+apiVersion: kops.k8s.io/v1alpha2
+kind: Cluster
+metadata:
+  name: kambly.k8s.local
+spec:
+  api:
+    loadBalancer:
+      type: Public
+  authorization:
+    rbac: {}
+  channel: stable
+  cloudConfig:
+    openstack:
+      blockStorage:
+        bs-version: v3
+        clusterName: kambly.k8s.local
+        ignore-volume-az: false
+      loadbalancer:
+        floatingNetwork: ext-floating1
+        floatingNetworkID: 0f9c3806-bd21-490f-918d-4a6d1c648489
+        method: ROUND_ROBIN
+        provider: octavia
+        useOctavia: true
+      monitor:
+        delay: 15s
+        maxRetries: 3
+        timeout: 10s
+      router:
+        dnsServers: 9.9.9.9,149.112.112.112
+        externalNetwork: ext-floating1
+  cloudControllerManager:
+    clusterName: kambly.k8s.local
+  cloudProvider: openstack
+  configBase: swift://kops-state/kambly.k8s.local
+  etcdClusters:
+  - cpuRequest: 200m
+    etcdMembers:
+    - instanceGroup: control-plane-dc3-a-04
+      name: etcd-4
+      volumeType: CEPH_1_perf1
+    memoryRequest: 100Mi
+    name: main
+  - cpuRequest: 100m
+    etcdMembers:
+    - instanceGroup: control-plane-dc3-a-04
+      name: etcd-4
+      volumeType: CEPH_1_perf1
+    memoryRequest: 100Mi
+    name: events
+  iam:
+    allowContainerRegistry: true
+    legacy: false
+  kubeProxy:
+    enabled: false
+  kubelet:
+    anonymousAuth: false
+  kubernetesApiAccess:
+  - 0.0.0.0/0
+  - ::/0
+  kubernetesVersion: 1.26.3
+  networkCIDR: 10.123.0.0/16
+  networking:
+    cilium:
+      enableNodePort: true
+  nonMasqueradeCIDR: 100.64.0.0/10
+  sshAccess:
+  - 0.0.0.0/0
+  - ::/0
+  subnets:
+  - cidr: 10.123.32.0/19
+    name: dc3-a-04
+    type: Private
+    zone: dc3-a-04
+  - cidr: 10.123.64.0/19
+    name: dc3-a-09
+    type: Private
+    zone: dc3-a-09
+  - cidr: 10.123.96.0/19
+    name: dc3-a-10
+    type: Private
+    zone: dc3-a-10
+  - cidr: 10.123.0.0/22
+    name: utility-dc3-a-04
+    type: Utility
+    zone: dc3-a-04
+  - cidr: 10.123.4.0/22
+    name: utility-dc3-a-09
+    type: Utility
+    zone: dc3-a-09
+  - cidr: 10.123.8.0/22
+    name: utility-dc3-a-10
+    type: Utility
+    zone: dc3-a-10
+  topology:
+    dns:
+      type: Private
+    masters: private
+    nodes: private
+---
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  creationTimestamp: null
+  labels:
+    kops.k8s.io/cluster: kambly.k8s.local
+  name: control-plane-dc3-a-04
+spec:
+  image: Ubuntu 22.04 LTS Jammy Jellyfish
+  machineType: a2-ram4-disk20-perf1
+  maxSize: 1
+  minSize: 1
+  role: Master
+  subnets:
+  - dc3-a-04
+---
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  creationTimestamp: null
+  labels:
+    kops.k8s.io/cluster: kambly.k8s.local
+  name: nodes-dc3-a-04
+spec:
+  image: Ubuntu 22.04 LTS Jammy Jellyfish
+  machineType: a2-ram4-disk20-perf1
+  maxSize: 1
+  minSize: 1
+  role: Node
+  subnets:
+  - dc3-a-04
+---
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  creationTimestamp: null
+  labels:
+    kops.k8s.io/cluster: kambly.k8s.local
+  name: nodes-dc3-a-10
+spec:
+  image: Ubuntu 22.04 LTS Jammy Jellyfish
+  machineType: a2-ram4-disk20-perf1
+  maxSize: 0
+  minSize: 0
+  role: Node
+  subnets:
+  - dc3-a-10
+---
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  creationTimestamp: null
+  labels:
+    kops.k8s.io/cluster: kambly.k8s.local
+  name: nodes-dc3-a-09
+spec:
+  image: Ubuntu 22.04 LTS Jammy Jellyfish
+  machineType: a2-ram4-disk20-perf1
+  maxSize: 0
+  minSize: 0
+  role: Node
+  subnets:
+  - dc3-a-09
+---
+apiVersion: kops.k8s.io/v1alpha2
+kind: SSHCredential
+metadata:
+  creationTimestamp: null
+  labels:
+    kops.k8s.io/cluster: kambly.k8s.local
+  name: admin
+spec:
+  publicKey: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJov21J2pGxwKIhTNPHjEkDy90U8VJBMiAodc2svmnFC
+    cardno:18 055 612
