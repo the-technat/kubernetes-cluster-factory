@@ -3,6 +3,9 @@
     "extends": [
         "config:recommended"
     ],
+    "ignorePaths": [
+      "useful_stuff/banana-bread-archive/"
+    ],
     "packageRules": [
         {
             "matchUpdateTypes": [
