@@ -7,7 +7,7 @@ resource "helm_release" "aws_load_balancer_controller" {
   name             = "aws-load-balancer-controller"
   repository       = "https://aws.github.io/eks-charts"
   chart            = "aws-load-balancer-controller"
-  version          = "1.5.3"
+  version          = "1.6.2"
   namespace        = "aws"
   create_namespace = true
 
@@ -17,6 +17,7 @@ resource "helm_release" "aws_load_balancer_controller" {
       cluster_name = var.name
       role_arn     = module.aws_load_balancer_controller_irsa.iam_role_arn
       vpcID        = module.vpc.vpc_id
+      sa_name = "aws-load-balancer-controller"
     })
   ]
 
@@ -47,38 +48,12 @@ module "aws_load_balancer_controller_irsa" {
 And as helm values:
 
 ```yaml
-replicaCount: 1
 clusterName: ${cluster_name}
-ingressClass: alb
 region: ${region}
 vpcId: ${vpcID}
-defaultSSLPolicy: "ELBSecurityPolicy-FS-1-2-Res-2020-10"
-tolerations:
-  - operator: Equal
-    key: "beta.kubernetes.io/arch"
-    value: "arm64"
-    effect: "NoExecute"
-
-hostNetwork: true # required due to cilium overlay
-dnsPolicy: "ClusterFirstWithHostNet"
 
 serviceAccount:
+  name: ${sa_name}
   annotations:
     eks.amazonaws.com/role-arn: ${role_arn}
-
-securityContext:
-  capabilities:
-    drop:
-      - ALL
-  readOnlyRootFilesystem: true
-  runAsNonRoot: true
-  allowPrivilegeEscalation: false
-
-resources:
-  limits:
-    cpu: 100m
-    memory: 256Mi
-  requests:
-    cpu: 100m
-    memory: 128Mi
 ```

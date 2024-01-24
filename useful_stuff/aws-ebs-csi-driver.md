@@ -9,10 +9,6 @@ resource "aws_eks_addon" "aws_ebs_csi_driver" {
   addon_name                  = "aws-ebs-csi-driver"
   service_account_role_arn  = module.aws_ebs_csi_driver_irsa.iam_role_arn
 
-  configuration_values = jsonencode({
-  
-  })
-
   tags = local.tags
 
   depends_on = [ 
@@ -21,23 +17,16 @@ resource "aws_eks_addon" "aws_ebs_csi_driver" {
    ]
 }
 
-resource "helm_release" "aws_ebs_csi_driver_extras" {
-  name      = "aws-ebs-csi-driver-extras"
-  chart     = "${path.module}/charts/aws-ebs-csi-driver-extras"
-  namespace = "kube-system"
-
-  values = [
-    templatefile("${path.module}/helm_values/aws_ebs_csi_driver_extras.yaml", {
-      type = "gp3"
-      className = "gp3"
-    })
-  ]
-
-  depends_on = [
-    aws_eks_addon.aws_ebs_csi_driver,
-  ]
+resource "kubernetes_storage_class_v1" "example" {
+  metadata {
+    name = "terraform-example"
+  }
+  storage_provisioner = "ebs.csi.aws.com"
+  reclaim_policy      = "Delete"
+  parameters = {
+    type = "gp3"
+  }
 }
-
 
 module "aws_ebs_csi_driver_irsa" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
@@ -55,9 +44,4 @@ module "aws_ebs_csi_driver_irsa" {
 
   tags = local.tags
 }
-```
-
-```yaml
-className: ${className}
-storageType: ${type}
 ```
