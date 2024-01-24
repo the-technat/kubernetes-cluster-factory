@@ -3,7 +3,7 @@ module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.5.1"
 
-  name = var.name
+  name = local.name
   cidr = local.cidr
 
   azs             = local.azs
@@ -11,7 +11,7 @@ module "vpc" {
   private_subnets = [for k, v in local.azs : cidrsubnet(local.cidr, 8, k + 10)]
 
   enable_nat_gateway = true
-  single_nat_gateway = var.single_nat_gateway
+  single_nat_gateway = local.single_nat_gateway
 
   # https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.6/deploy/subnet_discovery/
   public_subnet_tags = {

@@ -1,7 +1,7 @@
 # locals that hold data from datasources
 locals {
   tags = {
-    cluster    = var.name
+    cluster    = local.name
     repo       = "github.com/the-technat/grapes"
     managed-by = "terraform"
   }
@@ -19,6 +19,6 @@ data "aws_ami" "eks_default" {
   owners      = ["amazon"]
   filter {
     name   = "name"
-    values = ["amazon-eks-node-${var.eks_version}-v*"]
+    values = ["amazon-eks-node-${local.eks_version}-v*"]
   }
 }

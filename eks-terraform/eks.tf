@@ -2,8 +2,8 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "19.21.0"
 
-  cluster_name    = var.name
-  cluster_version = var.eks_version
+  cluster_name    = local.name
+  cluster_version = local.eks_version
 
   cluster_addons = {
     coredns = {
@@ -33,8 +33,8 @@ module "eks" {
   manage_aws_auth_configmap =  true
   aws_auth_users = [
     {
-      userarn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/${var.name}"
-      username = var.name
+      userarn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/${local.name}"
+      username = local.name
       groups = ["system:masters"]
     },
   ]
@@ -46,7 +46,7 @@ module "eks" {
     ami_type       = "AL2_x86_64"
     instance_types = ["t3a.medium", "t3.medium", "t2.medium"]
     ami_id         = data.aws_ami.eks_default.image_id
-    desired_size   = var.worker_count
+    desired_size   = local.worker_count
 
     # IAM
     iam_role_additional_policies = {
@@ -62,15 +62,15 @@ module "eks" {
 
   eks_managed_node_groups = {
     workers-a = {
-      name       = "${var.name}-a"
+      name       = "${local.name}-a"
       subnet_ids = [module.vpc.private_subnets[0]]
     }
     workers-b = {
-      name       = "${var.name}-b"
+      name       = "${local.name}-b"
       subnet_ids = [module.vpc.private_subnets[1]]
     }
     workers-c = {
-      name       = "${var.name}-c"
+      name       = "${local.name}-c"
       subnet_ids = [module.vpc.private_subnets[2]]
     }
   }

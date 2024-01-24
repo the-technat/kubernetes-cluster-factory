@@ -29,6 +29,9 @@ jobs:
     permissions: 
       id-token: write
       contents: read
+    defaults:
+      run:
+        working-directory: eks-terraform
     steps:
     - name: configure aws credentials
       uses: aws-actions/configure-aws-credentials@v4
@@ -37,12 +40,7 @@ jobs:
         role-session-name: grapes
         aws-region: ${{ github.event.inputs.region }} 
     - name: Grab Terraform files from bucket
-      run: aws --region ${{ env.STATE_BUCKET_REGION }} s3 sync s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} eks-terraform
-    - name: Save Terraform configuration to next job
-      uses: actions/upload-artifact@v4
-      with:
-        name: state-${{ github.event.inputs.name }}
-        path: eks-terraform   
+      run: aws --region ${{ env.STATE_BUCKET_REGION }} s3 sync s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }} ./
     - name: Setup terraform
       uses: hashicorp/setup-terraform@v3
       with:
@@ -50,9 +48,9 @@ jobs:
         terraform_wrapper: false
     - name: Terraform Init
       id: init
-      run: terraform -chdir=eks-terraform init -backend-config=s3.tfbackend
+      run: terraform  init -backend-config=s3.tfbackend
     - name: Terraform Destroy
-      run: terraform -chdir=eks-terraform destroy -auto-approve -input=false -var-file vars.tfvars
+      run: terraform destroy -auto-approve -input=false -var-file vars.tfvars
     - name: Delete cluster user
       if: always()
       run: |

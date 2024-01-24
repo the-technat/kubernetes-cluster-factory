@@ -1,4 +1,4 @@
-name: Create eks-terraform cluster
+name: Create local. cluster
 
 on:
   workflow_dispatch:
@@ -52,6 +52,9 @@ jobs:
     permissions: 
       id-token: write
       contents: read
+    defaults:
+      run:
+        working-directory: eks-terraform
     steps:
     - uses: actions/checkout@v4
     - name: configure aws credentials
@@ -65,25 +68,27 @@ jobs:
       run: |
         aws iam create-user --user-name ${{ github.event.inputs.name }}
         aws iam attach-user-policy --policy-arn "arn:aws:iam::aws:policy/AdministratorAccess" --user-name ${{ github.event.inputs.name }}
-        aws iam create-access-key --user-name ${{ github.event.inputs.name }} --output=json > eks-terraform/creds.json
+        aws iam create-access-key --user-name ${{ github.event.inputs.name }} --output=json > creds.json
     - name: Create Terraform backend configuration
       run: |
-        tee eks-terraform/s3.tfbackend << END
+        tee s3.tfbackend << END
           bucket     = "${{ env.STATE_BUCKET }}"
           key        = "${{ github.event.inputs.name }}-state"
           region     = "${{ env.STATE_BUCKET_REGION }}"
         END
     - name: Create variables file
       run: |
-        tee eks-terraform/vars.tfvars << END
-          name         = "${{ github.event.inputs.name }}"
-          single_nat_gateway = "${{ github.event.inputs.single_nat_gateway }}"
-          eks_version  = "${{ github.event.inputs.eks_version }}"
-          worker_count = "${{ github.event.inputs.worker_count }}"
+        tee -a data.tf << END
+          locals {
+            name         = "${{ github.event.inputs.name }}"
+            single_nat_gateway = "${{ github.event.inputs.single_nat_gateway }}"
+            eks_version  = "${{ github.event.inputs.eks_version }}"
+            worker_count = "${{ github.event.inputs.worker_count }}"
+          }
         END
     - name: Save Terraform configuration to s3 bucket
       run: |
-        aws --region ${{ env.STATE_BUCKET_REGION }} s3 sync eks-terraform/ s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }}
+        aws --region ${{ env.STATE_BUCKET_REGION }} s3 sync ./ s3://${{ env.STATE_BUCKET }}/${{ github.event.inputs.name }}
     - name: Setup terraform
       uses: hashicorp/setup-terraform@v3
       if: ${{ github.event.inputs.skip_deploy == false }}
@@ -93,16 +98,16 @@ jobs:
     - name: Terraform Init
       id: init
       if: ${{ github.event.inputs.skip_deploy == false }}
-      run: terraform -chdir=eks-terraform init -backend-config=s3.tfbackend
+      run: terraform  init -backend-config=s3.tfbackend
     - name: Terraform Apply 
       if: ${{ github.event.inputs.skip_deploy == false }}
-      run: terraform -chdir=eks-terraform apply -auto-approve -input=false -var-file vars.tfvars
+      run: terraform  apply -auto-approve -input=false 
     - name: Terraform Output
       if: ${{ github.event.inputs.skip_deploy == false }} 
-      run: terraform -chdir=eks-terraform output > $GITHUB_STEP_SUMMARY
+      run: terraform  output > $GITHUB_STEP_SUMMARY
     - name: Rollback cluster
       if: ${{ failure() || github.event.inputs.skip_deploy == false }} 
-      run: terraform -chdir=eks-terraform destroy -auto-approve -input=false -var-file vars.tfvars
+      run: terraform destroy -auto-approve -input=false
     - name: Rollback state
       if: ${{ failure() || github.event.inputs.skip_deploy == false }}
       run: |
