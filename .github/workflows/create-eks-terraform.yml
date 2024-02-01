@@ -60,7 +60,7 @@ jobs:
     - name: configure aws credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: arn:aws:iam::351425708426:role/grapes
+        role-to-assume: arn:aws:iam::351425708426:role/gh-grapes
         role-session-name: grapes
         aws-region: ${{ github.event.inputs.region }}
     - name: Create IAM user for cluster
