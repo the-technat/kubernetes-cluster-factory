@@ -1,5 +1,7 @@
 # Cilium on EKS
 
+Using Cilium in ENI mode on EKS
+
 You need two parts:
 
 ```cilium.tf
@@ -10,7 +12,7 @@ resource "helm_release" "cilium" {
   name       = "cilium"
   repository = "https://helm.cilium.io"
   chart      = "cilium"
-  version    = "1.14.6"
+  version    = "1.15.0"
   namespace  = "kube-system"
   wait       = true
   timeout    = 3600
@@ -18,6 +20,7 @@ resource "helm_release" "cilium" {
   values = [
     templatefile("${path.module}/helm_values/cilium.yaml", {
       cluster_endpoint = trim(module.eks.cluster_endpoint, "https://") # would be used for kube-proxy replacement
+      cluster_name = var.resource_name
     })
   ]
 
@@ -27,22 +30,6 @@ resource "helm_release" "cilium" {
   ]
 }
 
-resource "null_resource" "purge_kube_proxy" {
-  triggers = {
-    eks = module.eks.cluster_endpoint # only do this when the cluster changes (e.g create/recreate)
-  }
-
-  provisioner "local-exec" {
-    command = <<EOT
-      aws eks --region ${local.region} update-kubeconfig --name ${var.name}
-      curl -LO https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
-      chmod 0755 ./kubectl
-      ./kubectl -n kube-system delete daemonset kube-proxy --ignore-not-found 
-    EOT
-  }
-}
-
-
 resource "null_resource" "purge_aws_networking" {
   triggers = {
     eks = module.eks.cluster_endpoint # only do this when the cluster changes (e.g create/recreate)
@@ -51,8 +38,9 @@ resource "null_resource" "purge_aws_networking" {
   provisioner "local-exec" {
     command = <<EOT
       aws eks --region ${local.region} update-kubeconfig --name ${var.name}
-      curl -LO https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
+      curl -LO https://dl.k8s.io/release/v${var.eks_version}.0/bin/linux/amd64/kubectl
       chmod 0755 ./kubectl
+      ./kubectl -n kube-system delete daemonset kube-proxy --ignore-not-found 
       ./kubectl -n kube-system delete daemonset aws-node --ignore-not-found
     EOT
   }
@@ -62,56 +50,24 @@ resource "null_resource" "purge_aws_networking" {
 And the corresponding values:
 
 ```cilium.yaml
-## cni-chaining values
-# https://docs.cilium.io/en/stable/installation/cni-chaining-aws-cni/
-# cni:
-#   chainingMode: aws-cni
-#   exclusive: false
-# enableIPv4Masquerade: false
-# tunnel: disabled
-# endpointRoutes:
-#   enabled: true
-# remoteNodeIdentity: false
-# bpf:
-#   # explicitly set hostLegacy routing, required since EKS 1.24
-#   # somewhat related https://github.com/cilium/cilium/issues/20677
-#   hostLegacyRouting: true
-
-## ENI Integration values
-# https://docs.cilium.io/en/v1.13/installation/k8s-install-helm/#install-cilium -> eks
+rollOutCiliumPods: true
+cluster:
+  name: ${cluster_name}
+hubble:
+  enabled: true
+  relay:
+    rollOutPods: true
+    enabled: true
+routingMode: "native"
 eni:
   enabled: true
 ipam:
   mode: eni
-egressMasqueradeInterfaces: eth0
-tunnel: disabled
-bpf:
-  hostLegacyRouting: true # somehow on EKS this is required, but you could check whether it's still required
-
-# kube-proxy replacement
-# also requires ./kubectl -n kube-system delete daemonset kube-proxy --ignore-not-found in purge_aws_networking
-# cilium ingress gateway requires either partial or strict for the replacement
+  awsEnablePrefixDelegation: true
 kubeProxyReplacement: strict
+k8sServicePort: 443
 k8sServiceHost: ${cluster_endpoint}
-k8sServicePort: "443"
-
-## General values
-rollOutCiliumPods: true
-priorityClassName: "system-node-critical"
-annotateK8sNode: true
-policyEnforcementMode: "always"
-policyAuditMode: true
-
 operator:
-  replicas: 1 # otherwise the other replica won't scale up
   rollOutPods: true
-hubble:
-  enabled: true
-  rollOutPods: true
-  relay:
-    enabled: true
-    rollOutPods: true
-  ui:
-    enabled: true
-    rollOutPods: true
+  replicas: 1
 ```
