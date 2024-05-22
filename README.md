@@ -24,7 +24,6 @@ As a Kubernetes Engineer I sometimes just need a Kubernetes environment that I c
     - should provide block-storage
     - should provide service `type:LoadBalancer` implementation
   - Leave the rest open to the user
-- Credentials should be retrieved from Akeyless via Github Actions
 - The workflow should print out a text saying where you can access the cluster
   - But there should be no sensitive output nor in artifacts or logs
 - Code snippets how to solve special use-cases should be put in the `useful_stuff` folder so that one could use them after the cluster is created
