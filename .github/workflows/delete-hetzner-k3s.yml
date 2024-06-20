@@ -27,7 +27,7 @@ jobs:
         aws-region: ${{ env.STATE_BUCKET_REGION }}
     - name: Fetch secrets from AKeyless
       id: fetch-secrets
-      uses: LanceMcCarthy/akeyless-action@v3
+      uses: LanceMcCarthy/akeyless-action@v4
       with:
         access-id: ${{ secrets.AKEYLESS_ACCESS_ID}}
         static-secrets: '{"/actions/grapes/hcloud_token":"HCLOUD_TOKEN"}'
