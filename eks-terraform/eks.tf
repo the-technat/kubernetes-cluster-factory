@@ -113,7 +113,7 @@ data "aws_ami" "eks_default_x86_64" { # use eks-community-ami
 #####################
 module "vpc" {
   source             = "terraform-aws-modules/vpc/aws"
-  version            = "5.9.0"
+  version            = "5.13.0"
   name               = var.resource_name
   cidr               = var.vpc_cidr
   azs                = slice(data.aws_availability_zones.available.names, 0, 3)
