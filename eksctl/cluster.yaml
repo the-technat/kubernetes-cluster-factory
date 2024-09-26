@@ -1,0 +1,26 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: tomato
+  region: eu-central-2
+  version: "1.27"
+
+iamIdentityMappings:
+  - arn:
+
+nodeGroups:
+  - name: ng-1
+    instanceType: m5.large
+    desiredCapacity: 1
+    volumeSize: 20
+    spot: true
+    ssh:
+      enableSsm: true
+  - name: ng-2
+    instanceType: m5.xlarge
+    desiredCapacity: 1
+    volumeSize: 20
+    spot: true
+    ssh:
+      enableSsm: true
