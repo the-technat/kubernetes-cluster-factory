@@ -1,0 +1,44 @@
+cluster:
+  name: ${cluster_name}
+
+rollOutCiliumPods: true
+
+prometheus:
+  enabled: true
+
+hubble:
+  metrics:
+    enabled:
+      - dns:query;ignoreAAAA
+      - drop
+      - tcp
+      - flow
+      - icmp
+      - http
+  relay: 
+    enabled: true
+    rollOutPods: true
+    prometheus:
+      enabled: true
+  ui:
+    enabled: true
+    rollOutPods: true
+
+egressMasqueradeInterfaces: eth0
+eni:
+  enabled: true
+  # this is required because the small instances we use all have a maximum of 17 ENI IPs to allocate to pods
+  awsEnablePrefixDelegation: true
+ipam:
+  mode: eni
+routingMode: "native"
+
+kubeProxyReplacement: true
+k8sServicePort: 443
+k8sServiceHost: ${cluster_endpoint}
+
+operator:
+  replicas: 1
+  rollOutPods: true
+  prometheus:
+    enabled: true

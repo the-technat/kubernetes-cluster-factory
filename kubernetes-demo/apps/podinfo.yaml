@@ -1,0 +1,72 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: podinfo
+spec:
+  project: default
+  sources:
+    - repoURL: ghcr.io/stefanprodan/charts
+      chart: podinfo
+      targetRevision: 6.6.2
+      helm:
+        releaseName: podinfo
+        values: |
+          replicaCount: 3
+          ui:
+            color: "#FFCC00" 
+            message: "terraform-aws-eks-full example" 
+            logo: "https://camo.githubusercontent.com/6d6ec94bb2909d75122df9cf17e1940b522a805587c890a2e37a57eba61f7eb1/68747470733a2f2f7777772e6461746f636d732d6173736574732e636f6d2f323838352f313632393934313234322d6c6f676f2d7465727261666f726d2d6d61696e2e737667"
+
+          service:
+            annotations: 
+              prometheus.io/scrape: "true"
+              prometheus.io/port: "9797"
+          hpa:
+            enabled: true
+            maxReplicas: 10
+            cpu: 50 # currently that would mean 25m
+            memory: 32Mi
+
+          redis:
+            enabled: true
+
+          ingress:
+            enabled: true
+            className: "nginx"
+            annotations: 
+                cert-manager.io/cluster-issuer: letsencrypt-prod
+                ingress.kubernetes.io/force-ssl-redirect: "true"
+            hosts:
+              - host: aws.technat.dev
+                paths:
+                  - path: /
+                    pathType: Prefix
+            tls: 
+              - secretName: frontend-tls
+                hosts:
+                  - aws.technat.dev
+
+          resources:
+            requests:
+              cpu: 50m
+              memory: 16Mi
+            limits:
+              cpu: 200m
+              memory: 200Mi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: podinfo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
