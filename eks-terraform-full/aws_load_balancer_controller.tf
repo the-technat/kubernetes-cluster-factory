@@ -33,7 +33,7 @@ resource "helm_release" "aws_load_balancer_controller" {
 
 module "aws_load_balancer_controller_irsa" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "5.44.1"
+  version = "5.60.0"
 
   role_name_prefix                       = "aws-load-balancer-controller"
   attach_load_balancer_controller_policy = true
