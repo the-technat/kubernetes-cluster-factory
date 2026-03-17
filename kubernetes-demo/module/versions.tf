@@ -19,7 +19,7 @@ terraform {
     }
     argocd = {
       source  = "argoproj-labs/argocd"
-      version = "7.5.3"
+      version = "7.15.1"
     }
   }
 }
