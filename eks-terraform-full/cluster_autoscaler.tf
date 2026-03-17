@@ -13,7 +13,7 @@ resource "helm_release" "cluster_autoscaler" {
   name       = local.cluster_autoscaler_name
   repository = "https://kubernetes.github.io/autoscaler"
   chart      = "cluster-autoscaler"
-  version    = "9.53.0"
+  version    = "9.56.0"
   namespace  = kubernetes_namespace_v1.cluster_autoscaler.metadata[0].name
 
   values = [
